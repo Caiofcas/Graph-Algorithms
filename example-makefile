@@ -1,0 +1,30 @@
+SRCS=$(wildcard *.cpp)
+DEPS=$(SRCS:.cpp=.d)
+OBJS=$(SRCS:.cpp=.o)
+PROG=$(subst .cpp,,$(shell echo *.cpp))
+
+CXX=g++
+CXXFLAGS=-Wall -pedantic -O2 -std=c++14 -I ~/USP/Grafos/boost_1_76_0
+RM=rm -fv
+
+COMPILE.c = $(CXX) $(CXXFLAGS)
+OUTPUT_OPTION=-MMD -MP -c
+LINK.o = $(CXX) $(LDFLAGS)
+
+all: run
+
+%.o: %.cpp
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(PROG) : $(OBJS)
+	$(LINK.o) $^ -o $@
+
+.PHONY: run clean
+
+run: $(PROG)
+	./$(PROG)
+
+clean:
+	$(RM) $(PROG) $(OBJS) $(DEPS)
+
+-include $(DEPS)
