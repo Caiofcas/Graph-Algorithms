@@ -19,11 +19,10 @@ typedef boost::graph_traits<Arb>::vertex_descriptor Vertex;
    these objects are only accessed by the student's code */
 class HeadStart {
 public:
-  int* depth;
-  Vertex* closest_branching;
+  int *d, *f;
   HeadStart(int n) {
-    depth = new int(n); 
-    closest_branching = new Vertex(n); 
+    d = new int(n); 
+    f = new int(n); 
   };
 };
 

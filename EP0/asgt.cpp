@@ -8,6 +8,9 @@
 #include <queue>
 #include <vector>
 
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
 
 Arb read_arb(std::istream& in)
 {
@@ -34,41 +37,34 @@ Arb read_arb(std::istream& in)
   return arb;
 }
 
+
+void dfs_visit(const Vertex* v, std::vector<int> visited, int* time, HeadStart* hst, Arb &arb){
+  
+  typename boost::graph_traits<Arb>::out_edge_iterator out_edge_it, out_edge_end;
+
+  hst->d[*v] = (*time)++;
+  visited[*v] = GRAY;
+
+  for(std::tie(out_edge_it, out_edge_end) = boost::out_edges(*v, arb);
+      out_edge_it != out_edge_end; ++out_edge_it){
+        
+      }
+}
+
 HeadStart preprocess(Arb &arb, const Vertex& root)
 {
-  // HeadStart object will store two numbers per vertex:
-	//   - depth (distance from the root)
-	//   - closest_branching, last vertex of arb that has >1 out edge
+  // Performs DF-Search and stores two vectors:
+  // hst.d[i] = moment vertex i starts being processed
+  // hst.f[i] = moment vertex i stops being processed
 
-  typedef boost::graph_traits<Arb>::vertex_iterator Vertex_it_type;
-
-  HeadStart head = HeadStart(arb.vertex_set().size());
-  Vertex v_it;
-  std::vector<bool> visited(arb.vertex_set().size(), false);
-  std::queue<Vertex> q;
-  int depth = 0;
+  HeadStart hst = HeadStart(arb.vertex_set().size());
+  std::vector<int> visited(arb.vertex_set().size(), WHITE);
+  int time = 0;
 
   //Start by processing root
-  head.depth[root] = depth++;
-  head.closest_branching[root] = 0;
-  q.push(root);
+  dfs_visit(&root, visited, &time, &hst, arb);
 
-  //Perform a DFS through the vertices
-  do{
-    v_it = q.front();
-    q.pop();
-
-    //
-    if (!visited[v_it]){
-      visited[v_it] = true;
-      head.depth[v_it] = depth;
-      
-    }
-
-    ++depth;
-  } while(!q.empty());
-
-  return head;
+  return hst;
 }
 
 bool is_ancestor (const Vertex& u, const Vertex& v, const HeadStart& data)
