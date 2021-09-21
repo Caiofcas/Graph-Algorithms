@@ -35,3 +35,7 @@
 boost*.tar.gz
 
 .vscode
+
+diff*
+out*
+main
