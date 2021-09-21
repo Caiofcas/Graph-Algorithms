@@ -21,8 +21,8 @@ class HeadStart {
 public:
   int *d, *f;
   HeadStart(int n) {
-    d = new int(n); 
-    f = new int(n); 
+    d = new int(n);
+    f = new int(n);
   };
 };
 
