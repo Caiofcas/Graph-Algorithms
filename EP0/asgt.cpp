@@ -42,10 +42,17 @@ void dfs_visit(const Vertex* v, std::vector<int> visited, int* time, HeadStart* 
   
   typename boost::graph_traits<Arb>::out_edge_iterator out_edge_it, out_edge_end;
   Vertex u;
+  // printf("Entered dfs_visit\n");
+  // printf("Visiting %ld [%d]\n",*v, *time);
+  
+  // printf("Setting d[%ld] (currently: %d) (address: %p) with value %d\n", *v, hst->d[(int)*v], (void*) &hst->d[*v], *time);
+  // printf("Setting d[%ld] with value %d\n", *v, *time);
+  // printf("%d\t%d\n",sizeof(*v), sizeof(*time));
+  hst->d[(int)*v] = (*time)++;
+  
+  // printf("Set d[%ld] (address: %p) to: %d\n", *v, (void*) &hst->d[(int)*v], hst->d[*v]);
 
-  hst->d[*v] = ++(*time);
-  visited[*v] = GRAY;
-  printf("Visiting %ld [%d]\n",*v, *time);
+  visited[(int)*v] = GRAY;
 
   for(std::tie(out_edge_it, out_edge_end) = boost::out_edges(*v, arb);
       out_edge_it != out_edge_end; ++out_edge_it){
@@ -53,9 +60,8 @@ void dfs_visit(const Vertex* v, std::vector<int> visited, int* time, HeadStart* 
         if (visited[u] == WHITE) dfs_visit(&u, visited, time, hst, arb);
       };
 
-  hst->f[*v] = ++(*time);
-  visited[*v] = BLACK;
-  printf("Exiting %ld [%d]\n",*v, *time);
+  hst->f[(int)*v] = (*time)++;
+  visited[(int)*v] = BLACK;
 }
 
 HeadStart preprocess(Arb &arb, const Vertex& root)
@@ -64,21 +70,23 @@ HeadStart preprocess(Arb &arb, const Vertex& root)
   // hst.d[i] = moment vertex i starts being processed
   // hst.f[i] = moment vertex i stops being processed
 
-  HeadStart hst = HeadStart(arb.m_vertices.size());
-  std::vector<int> visited(arb.m_vertices.size(), WHITE);
+  HeadStart hst;
+  int n = arb.m_vertices.size();
+  std::vector<int> visited(n, WHITE);
   int time = 0;
+
+  hst.d =(int*) malloc(n*sizeof(int));
+  hst.f =(int*) malloc(n*sizeof(int));
 
   //Start by processing root
   dfs_visit(&root, visited, &time, &hst, arb);
 
-  printf("Exiting preprocess.\n");
   return hst;
 }
 
 bool is_ancestor (const Vertex& u, const Vertex& v, const HeadStart& data)
 {
   // is u an ancestor of v
-  printf("Is %ld an ancestor of %ld?\n", u, v);
   if (data.d[u] <= data.d[v] && data.f[v] <= data.f[u]) return true;
   return false;
 }

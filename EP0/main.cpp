@@ -19,5 +19,7 @@ int main(int argc, char** argv)
               << std::endl;
   }
 
+  free(data.d);
+  free(data.f);
   return EXIT_SUCCESS;
 }
