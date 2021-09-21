@@ -41,14 +41,21 @@ Arb read_arb(std::istream& in)
 void dfs_visit(const Vertex* v, std::vector<int> visited, int* time, HeadStart* hst, Arb &arb){
   
   typename boost::graph_traits<Arb>::out_edge_iterator out_edge_it, out_edge_end;
+  Vertex u;
 
-  hst->d[*v] = (*time)++;
+  hst->d[*v] = ++(*time);
   visited[*v] = GRAY;
+  printf("Visiting %ld [%d]\n",*v, *time);
 
   for(std::tie(out_edge_it, out_edge_end) = boost::out_edges(*v, arb);
       out_edge_it != out_edge_end; ++out_edge_it){
-        
-      }
+        u = boost::target(*out_edge_it, arb);
+        if (visited[u] == WHITE) dfs_visit(&u, visited, time, hst, arb);
+      };
+
+  hst->f[*v] = ++(*time);
+  visited[*v] = BLACK;
+  printf("Exiting %ld [%d]\n",*v, *time);
 }
 
 HeadStart preprocess(Arb &arb, const Vertex& root)
@@ -57,36 +64,21 @@ HeadStart preprocess(Arb &arb, const Vertex& root)
   // hst.d[i] = moment vertex i starts being processed
   // hst.f[i] = moment vertex i stops being processed
 
-  HeadStart hst = HeadStart(arb.vertex_set().size());
-  std::vector<int> visited(arb.vertex_set().size(), WHITE);
+  HeadStart hst = HeadStart(arb.m_vertices.size());
+  std::vector<int> visited(arb.m_vertices.size(), WHITE);
   int time = 0;
 
   //Start by processing root
   dfs_visit(&root, visited, &time, &hst, arb);
 
+  printf("Exiting preprocess.\n");
   return hst;
 }
 
 bool is_ancestor (const Vertex& u, const Vertex& v, const HeadStart& data)
-{ 
-
-  // v must be shallower than u
-  if (data.depth[u] <= data.depth[v])
-    return false;
-
-	if (data.closest_branching[u] == data.closest_branching[v])
-    return true;
-
-  Vertex branching = data.closest_branching[u];
-
-	//if closest_branching is not the same, need to check their depth
-
-  while (data.depth[branching] < data.depth[v]){
-    if (branching == v) return true;
-    branching = data.closest_branching[branching];
-  };
-
-  if (data.depth[branching] == data.depth[v]) return false;
-
+{
+  // is u an ancestor of v
+  printf("Is %ld an ancestor of %ld?\n", u, v);
+  if (data.d[u] <= data.d[v] && data.f[v] <= data.f[u]) return true;
   return false;
 }
