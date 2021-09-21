@@ -20,10 +20,7 @@ typedef boost::graph_traits<Arb>::vertex_descriptor Vertex;
 class HeadStart {
 public:
   int *d, *f;
-  HeadStart() {
-    // d = new int(n);
-    // f = new int(n);
-  };
+  HeadStart() {};
 };
 
 #endif // #ifndef ARB_H

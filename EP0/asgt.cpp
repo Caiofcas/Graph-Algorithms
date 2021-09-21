@@ -56,9 +56,8 @@ HeadStart preprocess(Arb &arb, const Vertex& root)
   // hst.f[i] = moment vertex i stops being processed
 
   HeadStart hst;
-  int n = arb.m_vertices.size();
+  int n = arb.m_vertices.size(), time = 0;
   std::vector<int> visited(n, WHITE);
-  int time = 0;
 
   hst.d =(int*) malloc(n*sizeof(int));
   hst.f =(int*) malloc(n*sizeof(int));
