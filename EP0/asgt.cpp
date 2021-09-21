@@ -24,44 +24,29 @@ Arb read_arb(std::istream& in)
   while(n_vertex--){
     Vertex x, y; std::cin >> x >> y;
     boost::add_edge(--x, --y, arb);
-    //std::cout << ++x << "  " << ++y << std::endl;
   }
 
-  /*print read edges
-  Arb::edge_iterator edge;
-  std::pair<Arb::edge_iterator,Arb::edge_iterator> edges = boost::edges(arb);
-  for (edge = edges.first; edge != edges.second; ++edge){
-    std::cout << *edge << std::endl;
-  }
-  */
   return arb;
 }
 
 
-void dfs_visit(const Vertex* v, std::vector<int> visited, int* time, HeadStart* hst, Arb &arb){
+void dfs_visit(const Vertex* v, std::vector<int>* visited, int* time, HeadStart* hst, Arb &arb){
   
   typename boost::graph_traits<Arb>::out_edge_iterator out_edge_it, out_edge_end;
   Vertex u;
-  // printf("Entered dfs_visit\n");
-  // printf("Visiting %ld [%d]\n",*v, *time);
-  
-  // printf("Setting d[%ld] (currently: %d) (address: %p) with value %d\n", *v, hst->d[(int)*v], (void*) &hst->d[*v], *time);
-  // printf("Setting d[%ld] with value %d\n", *v, *time);
-  // printf("%d\t%d\n",sizeof(*v), sizeof(*time));
-  hst->d[(int)*v] = (*time)++;
-  
-  // printf("Set d[%ld] (address: %p) to: %d\n", *v, (void*) &hst->d[(int)*v], hst->d[*v]);
 
-  visited[(int)*v] = GRAY;
+  hst->d[(int)*v] = (*time)++;
+
+  (*visited)[(int)*v] = GRAY;
 
   for(std::tie(out_edge_it, out_edge_end) = boost::out_edges(*v, arb);
       out_edge_it != out_edge_end; ++out_edge_it){
         u = boost::target(*out_edge_it, arb);
-        if (visited[u] == WHITE) dfs_visit(&u, visited, time, hst, arb);
+        if ((*visited)[u] == WHITE) dfs_visit(&u, visited, time, hst, arb);
       };
 
   hst->f[(int)*v] = (*time)++;
-  visited[(int)*v] = BLACK;
+  (*visited)[(int)*v] = BLACK;
 }
 
 HeadStart preprocess(Arb &arb, const Vertex& root)
@@ -79,7 +64,7 @@ HeadStart preprocess(Arb &arb, const Vertex& root)
   hst.f =(int*) malloc(n*sizeof(int));
 
   //Start by processing root
-  dfs_visit(&root, visited, &time, &hst, arb);
+  dfs_visit(&root, &visited, &time, &hst, arb);
 
   return hst;
 }
