@@ -4,21 +4,7 @@
  */
 
 #include <iostream>
-#include "digraph.hpp"
-
-Vertex index2vertex(int i, int n){
-    // Will consider:
-    //   [0,n-1] "normal literals"
-    //   [n,2n-1] "negated literals"
-    // to access  x_i -> vertex i-1
-    // to_access !x_i -> vertex i-1(+n) 
-    Vertex r;
-
-    if (i < 0) r = (-1*i) -1 + n;
-    else r = i-1;
-
-    return r;
-}
+#include "astg.hpp"
 
 
 int main(int argc, char** argv)
@@ -46,5 +32,20 @@ int main(int argc, char** argv)
             index2vertex(a, 2*n_variables),
             index2vertex(-b, 2*n_variables),
             dig);
+    }
+
+    switch (d)
+    {
+    case 0:
+        printf("Debbuging level 0 not implemented yet.\n");
+        break;
+    
+    case 1:
+        printf("Debbuging level 1 not implemented yet.\n");
+        break;
+    
+    case 2:
+        printf("Debbuging level 2 not implemented yet.\n");
+        break;
     }
 }
