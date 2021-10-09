@@ -6,10 +6,21 @@
 #include <iostream>
 #include "astg.hpp"
 
+
 void describe_digraph(Digraph dig){
     printf("%ld %ld\n",
         boost::num_vertices(dig), 
         boost::num_edges(dig));
+
+    // print all edges
+    Digraph::edge_iterator edge_it, edge_it_end;
+
+    for(std::tie(edge_it, edge_it_end) = boost::edges(dig);
+        edge_it != edge_it_end; edge_it++){
+
+        std::cout << (*edge_it).m_source << '\n';
+    };
+
 }
 
 
@@ -28,24 +39,33 @@ int main(int argc, char** argv)
     while(n_clauses--){
         int a, b; 
         std::cin >> a >> b;
-        printf("Read clause: %d %d\n", a, b);
+        std::cout << "Read clause: "<< a <<" "<< b << std::endl;
         boost::add_edge(
             literal2vertex(-a, n_variables),
             literal2vertex(b, n_variables),
             dig);
-        printf("Adding edge: %ld (%d) <-> %ld (%d)\n",
-            literal2vertex(-a, n_variables), -a,
-            literal2vertex(b, n_variables), b);
+
+        std::cout << "Adding edge: ";
+        std::cout << literal2vertex(-a, n_variables) << " (" << -a << ")";
+        std::cout << " <-> ";
+        std::cout << literal2vertex(b, n_variables) << " (" << b << ")";
+        std::cout << std::endl;
+
         boost::add_edge(
             literal2vertex(a, n_variables),
             literal2vertex(-b, n_variables),
             dig);
-        printf("Adding edge: %ld (%d) <-> %ld (%d)\n",
-            literal2vertex(a, n_variables), a,
-            literal2vertex(-b, n_variables), -b);
-        printf("|V|: %ld   |A|: %ld\n",
-            boost::num_vertices(dig), 
-            boost::num_edges(dig));
+
+        std::cout << "Adding edge: ";
+        std::cout << literal2vertex(-b, n_variables) << " (" << -b << ")";
+        std::cout << " <-> ";
+        std::cout << literal2vertex(a, n_variables) << " (" << a << ")";
+        std::cout << std::endl;
+
+        std::cout << "|V|: " << boost::num_vertices(dig);
+        std::cout << " |A|: " << boost::num_edges(dig);
+        std::cout << std::endl;
+
     }
 
     d = 2;
