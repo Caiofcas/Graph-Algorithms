@@ -52,6 +52,7 @@ int main(int argc, char** argv)
         std::cout << std::endl;
 
         boost::add_edge(
+            literal2vertex(-b, n_variables),
             literal2vertex(a, n_variables),
             literal2vertex(-b, n_variables),
             dig);
