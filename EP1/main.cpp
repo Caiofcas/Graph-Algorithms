@@ -32,16 +32,19 @@ int main(int argc, char** argv)
     int d, n_variables, n_clauses;
     std::cin >> d >> n_variables >> n_clauses;
 
-    std::cout << "Read d: " << d << std::endl;
-    std::cout << "Read n (n_variables): " <<  n_variables << std::endl;
-    std::cout << "Read m (n_clauses): " <<  n_clauses << std::endl;
+    // std::cout << "Read d: " << d << std::endl;
+    // std::cout << "Read n (n_variables): " <<  n_variables << std::endl;
+    // std::cout << "Read m (n_clauses): " <<  n_clauses << std::endl;
     
     //read_clauses
     Digraph dig(2*n_variables); // One vertex for each literal
    
-    printf("Created digraph with |V|: %ld\n", boost::num_vertices(dig) );
+    // std::cout << "Created digraph with |V|: "<< boost::num_vertices(dig);
+    // std::cout << std::endl;
+
     while(n_clauses--){
         int a, b; 
+        
         std::cin >> a >> b;
         // std::cout << "Read clause: " << a << " "<< b << std::endl;
 
@@ -77,11 +80,11 @@ int main(int argc, char** argv)
     switch (d)
     {
     case 0:
-        printf("Debbuging level 0 not implemented yet.\n");
+        std::cout << "Debbuging level 0 not implemented yet." << std::endl;
         break;
     
     case 1:
-        printf("Debbuging level 1 not implemented yet.\n");
+        std::cout << "Debbuging level 1 not implemented yet." << std::endl;
         break;
     
     case 2:
