@@ -22,8 +22,8 @@ int vertex2literal(Vertex v, int n){
     // n: number of variables ((|V|)
     int r;
 
-    if (v > n) r = -(v - n + 1);
+    if (v > static_cast<unsigned int>(n)) r = -(v - n + 1);
     else r = v + 1;
 
     return r;
-};
+}
