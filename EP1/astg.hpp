@@ -4,5 +4,5 @@
 #include <iostream>
 #include "digraph.hpp"
 
-Vertex index2vertex(int i, int n);
+Vertex literal2vertex(int i, int n);
 #endif // #ifndef ASGT_H
