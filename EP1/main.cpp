@@ -6,34 +6,49 @@
 #include <iostream>
 #include "astg.hpp"
 
+void describe_digraph(Digraph dig){
+    printf("%ld %ld\n",
+        boost::num_vertices(dig), 
+        boost::num_edges(dig));
+}
+
 
 int main(int argc, char** argv)
 {
     int d, n_variables, n_clauses;
     std::cin >> d >> n_variables >> n_clauses;
     printf("Read d: %d\n", d);
-    printf("Read n: %d\n", n_variables);
-    printf("Read m: %d\n", n_clauses);
+    printf("Read n (n_variables): %d\n", n_variables);
+    printf("Read m (n_clauses): %d\n", n_clauses);
     
     //read_clauses
     Digraph dig(2*n_variables); // One vertex for each literal
-
    
-    printf("Created digraph\n");
+    printf("Created digraph with |V|: %ld\n", boost::num_vertices(dig) );
     while(n_clauses--){
         int a, b; 
         std::cin >> a >> b;
         printf("Read clause: %d %d\n", a, b);
         boost::add_edge(
-            index2vertex(-a, 2*n_variables),
-            index2vertex(b, 2*n_variables),
+            literal2vertex(-a, n_variables),
+            literal2vertex(b, n_variables),
             dig);
+        printf("Adding edge: %ld <-> %ld\n",
+            literal2vertex(-a, n_variables),
+            literal2vertex(b, n_variables));
         boost::add_edge(
-            index2vertex(a, 2*n_variables),
-            index2vertex(-b, 2*n_variables),
+            literal2vertex(a, n_variables),
+            literal2vertex(-b, n_variables),
             dig);
+        printf("Adding edge: %ld <-> %ld\n",
+            literal2vertex(a, n_variables),
+            literal2vertex(-b, n_variables));
+        printf("|V|: %ld   |A|: %ld\n",
+            boost::num_vertices(dig), 
+            boost::num_edges(dig));
     }
 
+    d = 2;
     switch (d)
     {
     case 0:
@@ -45,7 +60,8 @@ int main(int argc, char** argv)
         break;
     
     case 2:
-        printf("Debbuging level 2 not implemented yet.\n");
+        describe_digraph(dig);
+        // printf("Debbuging level 2 not implemented yet.\n");
         break;
     }
 }
