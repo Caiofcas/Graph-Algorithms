@@ -33,16 +33,16 @@ int main(int argc, char** argv)
             literal2vertex(-a, n_variables),
             literal2vertex(b, n_variables),
             dig);
-        printf("Adding edge: %ld <-> %ld\n",
-            literal2vertex(-a, n_variables),
-            literal2vertex(b, n_variables));
+        printf("Adding edge: %ld (%d) <-> %ld (%d)\n",
+            literal2vertex(-a, n_variables), -a,
+            literal2vertex(b, n_variables), b);
         boost::add_edge(
             literal2vertex(a, n_variables),
             literal2vertex(-b, n_variables),
             dig);
-        printf("Adding edge: %ld <-> %ld\n",
-            literal2vertex(a, n_variables),
-            literal2vertex(-b, n_variables));
+        printf("Adding edge: %ld (%d) <-> %ld (%d)\n",
+            literal2vertex(a, n_variables), a,
+            literal2vertex(-b, n_variables), -b);
         printf("|V|: %ld   |A|: %ld\n",
             boost::num_vertices(dig), 
             boost::num_edges(dig));
