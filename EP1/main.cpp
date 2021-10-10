@@ -54,6 +54,42 @@ public:
         lowlink = std::vector<int>(n, 0);
     };
 
+    
+    /* ==========================================
+     *      Strong Component Labeling Methods
+     * ========================================== */
+    
+    //For each vertex, print each strong component it belongs to
+    static std::vector<int> label_vertexes_by_strong_comp(Digraph* dig){
+        int n_vert, nscc; 
+        n_vert = boost::num_vertices(*dig);
+        
+        // 1: Find strong components (Tarjan)
+        
+        // 1.1: Setup
+        DFS dfs(n_vert);
+        std::vector<int> sc_labeling(n_vert, -1);
+        std::vector<bool> in_stack(n_vert, false);
+        std::stack<Vertex> stack;
+        Digraph::vertex_iterator v_it, v_it_end;
+
+        nscc = 0;
+
+        // 1.2: Main Loop
+        std::tie(v_it, v_it_end) = boost::vertices(*dig);
+        for(; v_it != v_it_end; v_it++){
+            if(dfs.color[*v_it] == DFS::WHITE){
+                dfs.visit(
+                    *v_it,
+                    &stack, &in_stack,
+                    &nscc, &sc_labeling,
+                    dig
+                );
+            }
+        }
+
+        return sc_labeling;
+    }
     /* ==========================================
      *            Performing DFS Methods
      * ========================================== */
@@ -165,46 +201,14 @@ public:
 };
 
 
-//For each vertex, print each strong component it belongs to
-void label_vertexes_by_strong_comp(Digraph* dig){
-    int n_vert, nscc; 
-    n_vert = boost::num_vertices(*dig);
-    
-    // 1: Find strong components (Tarjan)
-    
-    // 1.1: Setup
-    DFS dfs(n_vert);
-    std::vector<int> sc_labeling(n_vert, -1);
-    std::vector<bool> in_stack(n_vert, false);
-    std::stack<Vertex> stack;
-    Digraph::vertex_iterator v_it, v_it_end;
 
-    nscc = 0;
-
-    // 1.2: Main Loop
-    std::tie(v_it, v_it_end) = boost::vertices(*dig);
-    for(; v_it != v_it_end; v_it++){
-        if(dfs.color[*v_it] == DFS::WHITE){
-            dfs.visit(
-                *v_it,
-                &stack, &in_stack,
-                &nscc, &sc_labeling,
-                dig
-            );
-        }
-    }
-
-    //Iterate through vertexes and print which strong component it belongs to.
-    std::tie(v_it, v_it_end) = boost::vertices(*dig);
-    for(; v_it != v_it_end; v_it++){
-        std::cout << sc_labeling[*v_it] << " ";
-    }
-    std::cout << std::endl;
-}
 
 int main(int argc, char** argv)
 {
     int d, n_variables, n_clauses;
+    Digraph::vertex_iterator v_it, v_it_end;
+    std::vector<int> sc_labeling;    
+
     std::cin >> d >> n_variables >> n_clauses;
 
     // std::cout << "Read d: " << d << std::endl;
@@ -258,7 +262,14 @@ int main(int argc, char** argv)
         break;
     
     case 1:
-        label_vertexes_by_strong_comp(&dig);
+        sc_labeling = DFS::label_vertexes_by_strong_comp(&dig);
+
+        //Iterate through vertexes and print which strong component it belongs to.
+        std::tie(v_it, v_it_end) = boost::vertices(dig);
+        for(; v_it != v_it_end; v_it++){
+            std::cout << sc_labeling[*v_it] << " ";
+        }
+        std::cout << std::endl;
         break;
     
     case 2:
