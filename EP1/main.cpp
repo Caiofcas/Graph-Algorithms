@@ -21,6 +21,10 @@ void describe_digraph(Digraph dig){
     };
 }
 
+//For each vertex, print each strong component it belongs to
+void label_vertexes_by_strong_comp(Digraph dig){
+    std::cout << "Debbuging level 1 not implemented yet." << std::endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -70,7 +74,7 @@ int main(int argc, char** argv)
 
     }
 
-    d = 2;
+    d = 1;
     switch (d)
     {
     case 0:
@@ -78,8 +82,7 @@ int main(int argc, char** argv)
         break;
     
     case 1:
-        //For each vertex, print each strong component it belongs to
-        std::cout << "Debbuging level 1 not implemented yet." << std::endl;
+        label_vertexes_by_strong_comp(dig);
         break;
     
     case 2:
