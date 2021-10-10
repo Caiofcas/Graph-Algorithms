@@ -7,10 +7,10 @@
 #define GRAY 1
 #define BLACK 2
 
-//Other Macros
-#define NULLVERT -1
 
-// Debugging level 2
+/* ==============================================
+ *              Debugging level 2
+ * ============================================== */
 // Print |V|, then |A|, then all arcs in digraph
 void describe_digraph(Digraph dig){
     Digraph::edge_iterator e_it, e_it_end;
@@ -29,25 +29,43 @@ void describe_digraph(Digraph dig){
     };
 }
 
+
+/* ==============================================
+ *              Debugging level 1
+ * ============================================== */
+
+class DFSData {
+public:
+    int time;
+    std::vector<int> color;
+    std::vector<int> discovery_time;
+    std::vector<int> finish_time;
+    std::vector<Vertex> parent;
+    DFSData(int n) {
+        color = std::vector<int>(n, WHITE);
+        discovery_time = std::vector<int>(n, 0);
+        finish_time = std::vector<int>(n, 0);
+        parent = std::vector<Vertex>(n, 0);
+    };
+};
+
+
 bool is_base_vertex(Vertex v){
     return false;
 }
 
 void tarjan_visit(
         Vertex u,
-        std::vector<int>* color,
-        std::vector<int>* discovery_time,
-        std::vector<int>* finish_time,
-        std::vector<Vertex>* parent,
+        DFSData* dfs,
         std::stack<Vertex>* stack,
-        int *time, int* nscc,
+        int* nscc,
         std::vector<int>* sc_labeling,
         Digraph* dig
         ){
     
     // Visit u
-    (*color)[u] = GRAY;
-    (*discovery_time)[u] = ++(*time);
+    (*dfs).color[u] = GRAY;
+    (*dfs).discovery_time[u] = ++(*dfs).time;
     (*stack).push(u);
 
     // Visit adjacent vertices to u
@@ -55,26 +73,22 @@ void tarjan_visit(
     std::tie(v_it,v_it_end) = boost::adjacent_vertices(u,*dig);
 
     for(; v_it!=v_it_end; v_it++){
-        if((*color)[*v_it]==WHITE){
-            (*parent)[*v_it] = u;
+        if((*dfs).color[*v_it] == WHITE){
+            (*dfs).parent[*v_it] = u;
             tarjan_visit(
                 *v_it,
-                color,
-                discovery_time,
-                finish_time,
-                parent,
+                dfs,
                 stack,
-                time, nscc,
+                nscc,
                 sc_labeling,
                 dig
             );
         }
-
     }
 
     //finish visiting u
-    (*color)[u] = BLACK;
-    (*finish_time)[u] = ++(*time);
+    (*dfs).color[u] = BLACK;
+    (*dfs).finish_time[u] = ++(*dfs).time;
 
     //identify strong components
     if (is_base_vertex(u)){
@@ -92,34 +106,28 @@ void tarjan_visit(
 
 //For each vertex, print each strong component it belongs to
 void label_vertexes_by_strong_comp(Digraph* dig){
-    int n_vert, nscc, time; 
+    int n_vert, nscc; 
     n_vert = boost::num_vertices(*dig);
     
     // 1: Find strong components (Tarjan)
     
     // 1.1: Setup
-    std::vector<int> color(n_vert, WHITE);
-    std::vector<int> discovery_time(n_vert);
-    std::vector<int> finish_time(n_vert);
+    DFSData dfs(n_vert);
     std::vector<int> sc_labeling(n_vert, -1);
-    std::vector<Vertex> parent(n_vert, NULLVERT);
     std::stack<Vertex> stack;
     Digraph::vertex_iterator v_it, v_it_end;
 
-    nscc = time = 0;
+    nscc = 0;
 
     // 1.2: Main Loop
     std::tie(v_it, v_it_end) = boost::vertices(*dig);
     for(; v_it != v_it_end; v_it++){
-        if(color[*v_it] == WHITE){
+        if(dfs.color[*v_it] == WHITE){
             tarjan_visit(
                 *v_it,
-                &color,
-                &discovery_time,
-                &finish_time,
-                &parent,
+                &dfs,
                 &stack,
-                &time, &nscc,
+                &nscc,
                 &sc_labeling,
                 dig
             );
