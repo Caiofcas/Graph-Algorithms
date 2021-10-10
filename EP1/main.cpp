@@ -29,6 +29,9 @@ void describe_digraph(Digraph dig){
     };
 }
 
+bool is_base_vertex(Vertex v){
+    return false;
+}
 
 void tarjan_visit(
         Vertex u,
@@ -37,7 +40,8 @@ void tarjan_visit(
         std::vector<int>* finish_time,
         std::vector<Vertex>* parent,
         std::stack<Vertex>* stack,
-        int *time,
+        int *time, int* nscc,
+        std::vector<int>* sc_labeling,
         Digraph* dig
         ){
     
@@ -60,7 +64,8 @@ void tarjan_visit(
                 finish_time,
                 parent,
                 stack,
-                time,
+                time, nscc,
+                sc_labeling,
                 dig
             );
         }
@@ -71,7 +76,17 @@ void tarjan_visit(
     (*color)[u] = BLACK;
     (*finish_time)[u] = ++(*time);
 
-    //lines 10-14 (identify string components)
+    //identify strong components
+    if (is_base_vertex(u)){
+        Vertex v;
+        (*nscc)++;
+        do
+        {
+            v = (*stack).top();
+            (*stack).pop();
+            (*sc_labeling)[v] = *nscc;
+        } while (v != u);
+    }
 }
 
 
@@ -86,6 +101,7 @@ void label_vertexes_by_strong_comp(Digraph* dig){
     std::vector<int> color(n_vert, WHITE);
     std::vector<int> discovery_time(n_vert);
     std::vector<int> finish_time(n_vert);
+    std::vector<int> sc_labeling(n_vert, -1);
     std::vector<Vertex> parent(n_vert, NULLVERT);
     std::stack<Vertex> stack;
     Digraph::vertex_iterator v_it, v_it_end;
@@ -103,16 +119,19 @@ void label_vertexes_by_strong_comp(Digraph* dig){
                 &finish_time,
                 &parent,
                 &stack,
-                &time,
+                &time, &nscc,
+                &sc_labeling,
                 dig
             );
         }
     }
 
-
-
     //Iterate through vertexes and print which strong component it belongs to.
-
+    std::tie(v_it, v_it_end) = boost::vertices(*dig);
+    for(; v_it != v_it_end; v_it++){
+        std::cout << sc_labeling[*v_it] << " ";
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char** argv)
