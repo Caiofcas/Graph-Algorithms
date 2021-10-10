@@ -54,6 +54,9 @@ public:
         lowlink = std::vector<int>(n, 0);
     };
 
+    /* ==========================================
+     *            Performing DFS Methods
+     * ========================================== */
     // Visit u
     void discover(Vertex u){
         time++;
@@ -73,6 +76,67 @@ public:
         // std::cout << " [" << time << "]" << std::endl;
     }
 
+    // Main DFS method
+    void visit(
+            Vertex u,
+            std::stack<Vertex>* stack,
+            std::vector<bool>* in_stack,
+            int* nscc,
+            std::vector<int>* sc_labeling,
+            Digraph* dig)
+        {
+        
+        this->discover(u);
+        (*stack).push(u);
+        (*in_stack)[u] = true;
+        // std::cout << "Put vertex " << vertex2literal(u,dfs->n/2);
+        // std::cout << " in stack (size:" << stack->size() << ")" << std::endl;
+
+        // Visit adjacent vertices to u
+        Digraph::adjacency_iterator v_it, v_it_end;
+        std::tie(v_it,v_it_end) = boost::adjacent_vertices(u, *dig);
+
+        for(; v_it != v_it_end; v_it++){
+            if(this->color[*v_it] == DFS::WHITE){
+                this->parent[*v_it] = u;
+                this->visit(
+                    *v_it,
+                    stack, in_stack,
+                    nscc,
+                    sc_labeling,
+                    dig
+                );
+                // update lowpoint
+                this->update_lp(u, *v_it, true);
+            }
+            // (u,v) is back or cross arc AND v is in stack 
+            else if (!this->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
+                this->update_lp(u, *v_it, false);
+            }
+        }
+
+        this->finish(u);
+
+        //identify strong components
+        if (this->is_base_vertex(u)){
+            // std::cout << vertex2literal(u,dfs->n/2) << " is a base vertex!" << std::endl;
+            Vertex v;
+            (*nscc)++;
+            do
+            {
+                v = (*stack).top();
+                (*stack).pop();
+                (*in_stack)[v] = false;
+                (*sc_labeling)[v] = *nscc;
+                // std::cout << "Assigned SC (" << *nscc << ") to vertex: ";
+                // std::cout << vertex2literal(u,dfs->n/2) << std::endl;
+            } while (v != u);
+        }
+    }
+
+    /* ==========================================
+     *            Helper Methods
+     * ========================================== */
     // Update lowlink if smaller candidate    
     void update_lp(Vertex u, Vertex v, bool use_lp){
         int candidate_val;
@@ -82,7 +146,7 @@ public:
         
         if(lowlink[u] > candidate_val) 
             lowlink[u] = candidate_val;
-        
+     
         // std::cout << "lowlink of vertex " << vertex2literal(u, n/2);
         // std::cout << " is now " << lowlink[u] << std::endl;
     }
@@ -96,69 +160,9 @@ public:
         // std::cout << "is Vertex " << vertex2literal(u, n/2) << " a base value? ";
         // std::cout << "d: " << discovery_time[u] << " ll: " << lowlink[u];
         // std::cout << " Answer: " << (discovery_time[u] == lowlink[u]) << std::endl;
-       
         return discovery_time[u] == lowlink[u];
     }
 };
-
-void dfs_visit(
-        Vertex u,
-        DFS* dfs,
-        std::stack<Vertex>* stack,
-        std::vector<bool>* in_stack,
-        int* nscc,
-        std::vector<int>* sc_labeling,
-        Digraph* dig
-        ){
-    
-    dfs->discover(u);
-    (*stack).push(u);
-    (*in_stack)[u] = true;
-    // std::cout << "Put vertex " << vertex2literal(u,dfs->n/2);
-    // std::cout << " in stack (size:" << stack->size() << ")" << std::endl;
-
-    // Visit adjacent vertices to u
-    Digraph::adjacency_iterator v_it, v_it_end;
-    std::tie(v_it,v_it_end) = boost::adjacent_vertices(u,*dig);
-
-    for(; v_it != v_it_end; v_it++){
-        if(dfs->color[*v_it] == DFS::WHITE){
-            dfs->parent[*v_it] = u;
-            dfs_visit(
-                *v_it,
-                dfs,
-                stack, in_stack,
-                nscc,
-                sc_labeling,
-                dig
-            );
-            // update lowpoint
-            dfs->update_lp(u, *v_it, true);
-        }
-        // (u,v) is back or cross arc AND v is in stack 
-        else if (!dfs->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
-            dfs->update_lp(u, *v_it, false);
-        }
-    }
-
-    dfs->finish(u);
-
-    //identify strong components
-    if (dfs->is_base_vertex(u)){
-        // std::cout << vertex2literal(u,dfs->n/2) << " is a base vertex!" << std::endl;
-        Vertex v;
-        (*nscc)++;
-        do
-        {
-            v = (*stack).top();
-            (*stack).pop();
-            (*in_stack)[v] = false;
-            (*sc_labeling)[v] = *nscc;
-            // std::cout << "Assigned SC (" << *nscc << ") to vertex: ";
-            // std::cout << vertex2literal(u,dfs->n/2) << std::endl;
-        } while (v != u);
-    }
-}
 
 
 //For each vertex, print each strong component it belongs to
@@ -181,9 +185,8 @@ void label_vertexes_by_strong_comp(Digraph* dig){
     std::tie(v_it, v_it_end) = boost::vertices(*dig);
     for(; v_it != v_it_end; v_it++){
         if(dfs.color[*v_it] == DFS::WHITE){
-            dfs_visit(
+            dfs.visit(
                 *v_it,
-                &dfs,
                 &stack, &in_stack,
                 &nscc, &sc_labeling,
                 dig
