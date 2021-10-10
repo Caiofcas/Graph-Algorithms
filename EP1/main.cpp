@@ -1,6 +1,14 @@
 #include <iostream>
 #include "astg.hpp"
+#include <stack>
 
+//Colors for DFS
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
+
+//Other Macros
+#define NULLVERT -1
 
 // Debugging level 2
 // Print |V|, then |A|, then all arcs in digraph
@@ -21,9 +29,90 @@ void describe_digraph(Digraph dig){
     };
 }
 
+
+void tarjan_visit(
+        Vertex u,
+        std::vector<int>* color,
+        std::vector<int>* discovery_time,
+        std::vector<int>* finish_time,
+        std::vector<Vertex>* parent,
+        std::stack<Vertex>* stack,
+        int *time,
+        Digraph* dig
+        ){
+    
+    // Visit u
+    (*color)[u] = GRAY;
+    (*discovery_time)[u] = ++(*time);
+    (*stack).push(u);
+
+    // Visit adjacent vertices to u
+    Digraph::adjacency_iterator v_it, v_it_end;
+    std::tie(v_it,v_it_end) = boost::adjacent_vertices(u,*dig);
+
+    for(; v_it!=v_it_end; v_it++){
+        if((*color)[*v_it]==WHITE){
+            (*parent)[*v_it] = u;
+            tarjan_visit(
+                *v_it,
+                color,
+                discovery_time,
+                finish_time,
+                parent,
+                stack,
+                time,
+                dig
+            );
+        }
+
+    }
+
+    //finish visiting u
+    (*color)[u] = BLACK;
+    (*finish_time)[u] = ++(*time);
+
+    //lines 10-14 (identify string components)
+}
+
+
 //For each vertex, print each strong component it belongs to
-void label_vertexes_by_strong_comp(Digraph dig){
-    std::cout << "Debbuging level 1 not implemented yet." << std::endl;
+void label_vertexes_by_strong_comp(Digraph* dig){
+    int n_vert, nscc, time; 
+    n_vert = boost::num_vertices(*dig);
+    
+    // 1: Find strong components (Tarjan)
+    
+    // 1.1: Setup
+    std::vector<int> color(n_vert, WHITE);
+    std::vector<int> discovery_time(n_vert);
+    std::vector<int> finish_time(n_vert);
+    std::vector<Vertex> parent(n_vert, NULLVERT);
+    std::stack<Vertex> stack;
+    Digraph::vertex_iterator v_it, v_it_end;
+
+    nscc = time = 0;
+
+    // 1.2: Main Loop
+    std::tie(v_it, v_it_end) = boost::vertices(*dig);
+    for(; v_it != v_it_end; v_it++){
+        if(color[*v_it] == WHITE){
+            tarjan_visit(
+                *v_it,
+                &color,
+                &discovery_time,
+                &finish_time,
+                &parent,
+                &stack,
+                &time,
+                dig
+            );
+        }
+    }
+
+
+
+    //Iterate through vertexes and print which strong component it belongs to.
+
 }
 
 int main(int argc, char** argv)
@@ -82,7 +171,7 @@ int main(int argc, char** argv)
         break;
     
     case 1:
-        label_vertexes_by_strong_comp(dig);
+        label_vertexes_by_strong_comp(&dig);
         break;
     
     case 2:
