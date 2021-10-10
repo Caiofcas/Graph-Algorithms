@@ -82,13 +82,11 @@ public:
         return (discovery_time[u] < discovery_time[v]) \
              & (finish_time[v] < finish_time[u]);
     }
+
+    bool is_base_vertex(Vertex u){
+        return discovery_time[u] == lowlink[u];
+    }
 };
-
-
-bool is_base_vertex(Vertex u){
-    return false;
-}
-
 
 void dfs_visit(
         Vertex u,
@@ -131,7 +129,7 @@ void dfs_visit(
     dfs->finish(u);
 
     //identify strong components
-    if (is_base_vertex(u)){
+    if (dfs->is_base_vertex(u)){
         Vertex v;
         (*nscc)++;
         do
