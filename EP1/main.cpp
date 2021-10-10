@@ -42,21 +42,21 @@ public:
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
-    std::vector<int> lowpoint;
+    std::vector<int> lowlink;
     std::vector<Vertex> parent;
     DFS(int n) {
         color = std::vector<int>(n, WHITE);
         discovery_time = std::vector<int>(n, 0);
         finish_time = std::vector<int>(n, 0);
         parent = std::vector<Vertex>(n);
-        lowpoint = std::vector<int>(n, 0);
+        lowlink = std::vector<int>(n, 0);
     };
 
     // Visit u
     void discover(Vertex u){
         time++;
         discovery_time[u] = time;
-        lowpoint[u] = time;
+        lowlink[u] = time;
         color[u] = GRAY;
     }
 
@@ -66,22 +66,24 @@ public:
         finish_time[u] = time;
         color[u] = BLACK;
     }
-    
+
+    // Update lowlink if smaller candidate    
     void update_lp(Vertex u, Vertex v, bool use_lp){
         int candidate_val;
 
-        if(use_lp) candidate_val = lowpoint[v];
+        if(use_lp) candidate_val = lowlink[v];
         else candidate_val = discovery_time[v];
         
-        if(lowpoint[u] < candidate_val) 
-            lowpoint[u] = candidate_val;
+        if(lowlink[u] < candidate_val) 
+            lowlink[u] = candidate_val;
+    }
+
+    bool is_tree_arc(Vertex u, Vertex v){
+        return (discovery_time[u] < discovery_time[v]) \
+             & (finish_time[v] < finish_time[u]);
     }
 };
 
-
-bool is_back_or_cross_arc(Vertex u, Vertex v, Digraph* dig){
-    return false;
-}
 
 bool is_base_vertex(Vertex u){
     return false;
@@ -92,6 +94,7 @@ void dfs_visit(
         Vertex u,
         DFS* dfs,
         std::stack<Vertex>* stack,
+        std::vector<bool>* in_stack,
         int* nscc,
         std::vector<int>* sc_labeling,
         Digraph* dig
@@ -99,18 +102,19 @@ void dfs_visit(
     
     dfs->discover(u);
     (*stack).push(u);
+    (*in_stack)[u] = true;
 
     // Visit adjacent vertices to u
     Digraph::adjacency_iterator v_it, v_it_end;
     std::tie(v_it,v_it_end) = boost::adjacent_vertices(u,*dig);
 
-    for(; v_it!=v_it_end; v_it++){
+    for(; v_it != v_it_end; v_it++){
         if(dfs->color[*v_it] == DFS::WHITE){
             dfs->parent[*v_it] = u;
             dfs_visit(
                 *v_it,
                 dfs,
-                stack,
+                stack, in_stack,
                 nscc,
                 sc_labeling,
                 dig
@@ -118,7 +122,8 @@ void dfs_visit(
             // update lowpoint
             dfs->update_lp(u, *v_it, true);
         }
-        else if (is_back_or_cross_arc(u, *v_it, dig)){
+        // (u,v) is back or cross arc AND v is in stack 
+        else if (!dfs->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
             dfs->update_lp(u, *v_it, false);
         }
     }
@@ -133,6 +138,7 @@ void dfs_visit(
         {
             v = (*stack).top();
             (*stack).pop();
+            (*in_stack)[v] = false;
             (*sc_labeling)[v] = *nscc;
         } while (v != u);
     }
@@ -149,6 +155,7 @@ void label_vertexes_by_strong_comp(Digraph* dig){
     // 1.1: Setup
     DFS dfs(n_vert);
     std::vector<int> sc_labeling(n_vert, -1);
+    std::vector<bool> in_stack(n_vert, false);
     std::stack<Vertex> stack;
     Digraph::vertex_iterator v_it, v_it_end;
 
@@ -161,9 +168,8 @@ void label_vertexes_by_strong_comp(Digraph* dig){
             dfs_visit(
                 *v_it,
                 &dfs,
-                &stack,
-                &nscc,
-                &sc_labeling,
+                &stack, &in_stack,
+                &nscc, &sc_labeling,
                 dig
             );
         }
