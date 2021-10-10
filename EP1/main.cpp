@@ -38,13 +38,15 @@ public:
     static const short BLACK = 2;
 
     // Instance data
-    int time;
+    int time, n;
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
     std::vector<int> lowlink;
     std::vector<Vertex> parent;
-    DFS(int n) {
+    DFS(int n_vert) {
+        n = n_vert;
+        time = 0;
         color = std::vector<int>(n, WHITE);
         discovery_time = std::vector<int>(n, 0);
         finish_time = std::vector<int>(n, 0);
@@ -58,6 +60,8 @@ public:
         discovery_time[u] = time;
         lowlink[u] = time;
         color[u] = GRAY;
+        // std::cout << "Discovered vertex: " << vertex2literal(u,n/2);
+        // std::cout << " [" << time << "]" << std::endl;
     }
 
     // Finish visiting u
@@ -65,6 +69,8 @@ public:
         time++;
         finish_time[u] = time;
         color[u] = BLACK;
+        // std::cout << "Left vertex: " << vertex2literal(u, n/2);
+        // std::cout << " [" << time << "]" << std::endl;
     }
 
     // Update lowlink if smaller candidate    
@@ -74,8 +80,11 @@ public:
         if(use_lp) candidate_val = lowlink[v];
         else candidate_val = discovery_time[v];
         
-        if(lowlink[u] < candidate_val) 
+        if(lowlink[u] > candidate_val) 
             lowlink[u] = candidate_val;
+        
+        // std::cout << "lowlink of vertex " << vertex2literal(u, n/2);
+        // std::cout << " is now " << lowlink[u] << std::endl;
     }
 
     bool is_tree_arc(Vertex u, Vertex v){
@@ -84,6 +93,10 @@ public:
     }
 
     bool is_base_vertex(Vertex u){
+        // std::cout << "is Vertex " << vertex2literal(u, n/2) << " a base value? ";
+        // std::cout << "d: " << discovery_time[u] << " ll: " << lowlink[u];
+        // std::cout << " Answer: " << (discovery_time[u] == lowlink[u]) << std::endl;
+       
         return discovery_time[u] == lowlink[u];
     }
 };
@@ -101,6 +114,8 @@ void dfs_visit(
     dfs->discover(u);
     (*stack).push(u);
     (*in_stack)[u] = true;
+    // std::cout << "Put vertex " << vertex2literal(u,dfs->n/2);
+    // std::cout << " in stack (size:" << stack->size() << ")" << std::endl;
 
     // Visit adjacent vertices to u
     Digraph::adjacency_iterator v_it, v_it_end;
@@ -130,6 +145,7 @@ void dfs_visit(
 
     //identify strong components
     if (dfs->is_base_vertex(u)){
+        // std::cout << vertex2literal(u,dfs->n/2) << " is a base vertex!" << std::endl;
         Vertex v;
         (*nscc)++;
         do
@@ -138,6 +154,8 @@ void dfs_visit(
             (*stack).pop();
             (*in_stack)[v] = false;
             (*sc_labeling)[v] = *nscc;
+            // std::cout << "Assigned SC (" << *nscc << ") to vertex: ";
+            // std::cout << vertex2literal(u,dfs->n/2) << std::endl;
         } while (v != u);
     }
 }
