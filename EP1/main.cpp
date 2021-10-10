@@ -66,6 +66,16 @@ public:
         finish_time[u] = time;
         color[u] = BLACK;
     }
+    
+    void update_lp(Vertex u, Vertex v, bool use_lp){
+        int candidate_val;
+
+        if(use_lp) candidate_val = lowpoint[v];
+        else candidate_val = discovery_time[v];
+        
+        if(lowpoint[u] < candidate_val) 
+            lowpoint[u] = candidate_val;
+    }
 };
 
 
@@ -106,16 +116,10 @@ void dfs_visit(
                 dig
             );
             // update lowpoint
-            dfs->lowpoint[u] = (
-                dfs->lowpoint[u] < dfs->lowpoint[*v_it] ?
-                dfs->lowpoint[u] :
-                dfs->lowpoint[*v_it]);
+            dfs->update_lp(u, *v_it, true);
         }
         else if (is_back_or_cross_arc(u, *v_it, dig)){
-            dfs->lowpoint[u] = (
-                dfs->lowpoint[u] < dfs->discovery_time[*v_it] ?
-                dfs->lowpoint[u] :
-                dfs->discovery_time[*v_it]);
+            dfs->update_lp(u, *v_it, false);
         }
     }
 
