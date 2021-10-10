@@ -254,26 +254,20 @@ int main(int argc, char** argv)
 
     }
 
-    d = 1;
-    switch (d)
-    {
-    case 0:
-        std::cout << "Debbuging level 0 not implemented yet." << std::endl;
-        break;
-    
-    case 1:
+    // d = 1;
+    if (d==2) describe_digraph(dig);
+    else {
         sc_labeling = DFS::label_vertexes_by_strong_comp(&dig);
-
-        //Iterate through vertexes and print which strong component it belongs to.
-        std::tie(v_it, v_it_end) = boost::vertices(dig);
-        for(; v_it != v_it_end; v_it++){
-            std::cout << sc_labeling[*v_it] << " ";
+        if (d==1){
+            // Iterate through vertexes and print which strong 
+            // component it belongs to.
+            std::tie(v_it, v_it_end) = boost::vertices(dig);
+            for(; v_it != v_it_end; v_it++){
+                std::cout << sc_labeling[*v_it] << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cout << "Debbuging level 0 not implemented yet." << std::endl;
         }
-        std::cout << std::endl;
-        break;
-    
-    case 2:
-        describe_digraph(dig);
-        break;
     }
 }
