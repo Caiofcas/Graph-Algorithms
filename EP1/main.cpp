@@ -1,29 +1,24 @@
-/* This is the driver. Code similar to this will be used for grading.
- * It may be edited by the students for testing purposes, however it
- * WILL NOT be submitted as part of the assignment.
- */
-
 #include <iostream>
 #include "astg.hpp"
 
 
+// Debugging level 2
+// Print |V|, then |A|, then all arcs in digraph
 void describe_digraph(Digraph dig){
+    Digraph::edge_iterator e_it, e_it_end;
+    int n_vars;
+
     std::cout << boost::num_vertices(dig) << " ";
     std::cout << boost::num_edges(dig) << std::endl;
 
-    // print all edges
-    Digraph::edge_iterator e_it, e_it_end;
-    int n_variables = boost::num_vertices(dig)/2;
-    // std::cout << "n_variables: " << n_variables << std::endl;
+    std::tie(e_it, e_it_end) = boost::edges(dig);
+    n_vars = boost::num_vertices(dig)/2;
 
-    for(std::tie(e_it, e_it_end) = boost::edges(dig);
-        e_it != e_it_end; e_it++){
-
-        std::cout << vertex2literal((*e_it).m_source, n_variables);
-        std::cout << " " << vertex2literal((*e_it).m_target, n_variables);
+    for(;e_it != e_it_end; e_it++){
+        std::cout << vertex2literal((*e_it).m_source, n_vars);
+        std::cout << " " << vertex2literal((*e_it).m_target, n_vars);
         std::cout << std::endl;
     };
-
 }
 
 
@@ -36,7 +31,6 @@ int main(int argc, char** argv)
     // std::cout << "Read n (n_variables): " <<  n_variables << std::endl;
     // std::cout << "Read m (n_clauses): " <<  n_clauses << std::endl;
     
-    //read_clauses
     Digraph dig(2*n_variables); // One vertex for each literal
    
     // std::cout << "Created digraph with |V|: "<< boost::num_vertices(dig);
@@ -84,6 +78,7 @@ int main(int argc, char** argv)
         break;
     
     case 1:
+        //For each vertex, print each strong component it belongs to
         std::cout << "Debbuging level 1 not implemented yet." << std::endl;
         break;
     
