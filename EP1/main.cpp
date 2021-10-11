@@ -277,7 +277,8 @@ int main(int argc, char** argv)
             // component it belongs to.
             std::tie(v_it, v_it_end) = boost::vertices(dig);
             for(; v_it != v_it_end; v_it++){
-                std::cout << sc_labeling[*v_it] << " ";
+                std::cout << sc_labeling[*v_it];
+                if (v_it < v_it_end-1) std::cout << " ";
             }
             std::cout << std::endl;
         } else {
@@ -296,8 +297,10 @@ int main(int argc, char** argv)
             std::cout << "YES ";
             std::vector<bool> assg = dfs.find_truth_assignment(n_variables);
             
-            for(int i = 0; i < n_variables; i++)
-                std::cout << assg[i] << " ";
+            for(int i = 0; i < n_variables; i++){
+                std::cout << assg[i];
+                if (i < n_variables-1) std::cout << " ";
+            }
             
             std::cout << std::endl;
         }
