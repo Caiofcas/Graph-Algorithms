@@ -11,9 +11,9 @@ typedef boost::adjacency_list<boost::vecS,
 
 typedef boost::graph_traits<Digraph>::vertex_descriptor Vertex;
 
-/* ==============================================
- *         literal <-> vertex Helpers
- * ============================================== */
+/* ========================================================
+ *                literal <-> vertex Helpers
+ * ======================================================== */
 
 /* Will consider:
  *   [0,n-1] "normal literals"
@@ -43,9 +43,11 @@ int vertex2literal(Vertex v, int n){
     return r;
 }
 
-/* ==============================================
- *              Debugging level 2
- * ============================================== */
+
+/* ========================================================
+ *                   Debugging level 2
+ * ======================================================== */
+
 // Print |V|, then |A|, then all arcs in digraph
 void describe_digraph(Digraph dig){
     Digraph::edge_iterator e_it, e_it_end;
@@ -64,10 +66,9 @@ void describe_digraph(Digraph dig){
     };
 }
 
-
-/* ==============================================
- *            Debugging levels 1,0
- * ============================================== */
+/* ========================================================
+ *                  Debugging levels 1,0
+ * ======================================================== */
 
 class DFS {
 public:
@@ -87,7 +88,6 @@ public:
     std::vector<Vertex> parent;
 
     DFS(Digraph* dig) {
-        // std::cout << "Start constructor" << std::endl;
         this->n = boost::num_vertices(*dig);
         this->dig = dig;
         this->next = this->time = 0;
@@ -97,13 +97,11 @@ public:
         this->lowlink = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
         this->top_order = std::vector<Vertex>(this->n);
-        // std::cout << "End constructor" << std::endl;
     };
 
-
-    /* ==========================================
-     *          Strong Component Labeling
-     * ========================================== */
+    /* ====================================================
+     *                 Strong Component Labeling
+     * ==================================================== */
     
     std::vector<int> label_vertexes_by_strong_comp(){
         
@@ -113,7 +111,6 @@ public:
         Digraph::vertex_iterator v_it, v_it_end;
         int nscc = 0;
 
-        // 1.2: Main Loop
         std::tie(v_it, v_it_end) = boost::vertices(*(this->dig));
         for(; v_it != v_it_end; v_it++){
             if(this->color[*v_it] == DFS::WHITE){
@@ -125,17 +122,17 @@ public:
 
         return sc_labeling;
     }
-    /* ==========================================
-     *            Performing DFS Methods
-     * ========================================== */
+
+    /* ====================================================
+     *                 Performing DFS Methods
+     * ==================================================== */
+
     // Visit u
     void discover(Vertex u){
         this->time++;
         this->discovery_time[u] = this->time;
         this->lowlink[u] = this->time;
         this->color[u] = DFS::GRAY;
-        // std::cout << "Discovered vertex: " << vertex2literal(u,n/2);
-        // std::cout << " [" << time << "]" << std::endl;
     }
 
     // Finish visiting u
@@ -144,8 +141,6 @@ public:
         this->finish_time[u] = time;
         this->color[u] = DFS::BLACK;
         this->top_order[u] = this->time;
-        // std::cout << "Left vertex: " << vertex2literal(u, n/2);
-        // std::cout << " [" << time << "]" << std::endl;
     }
 
     // Main DFS method
@@ -160,8 +155,6 @@ public:
         this->discover(u);
         (*stack).push(u);
         (*in_stack)[u] = true;
-        // std::cout << "Put vertex " << vertex2literal(u,this->n/2);
-        // std::cout << " in stack (size:" << stack->size() << ")" << std::endl;
 
         // Visit adjacent vertices to u
         Digraph::adjacency_iterator v_it, v_it_end;
@@ -177,12 +170,12 @@ public:
                     nscc, 
                     sc_labeling
                 );
-                // update lowpoint
-                this->update_lp(u, *v_it, true);
+                // update lowlink
+                this->update_ll(u, *v_it, true);
             }
             // (u,v) is back or cross arc AND v is in stack 
             else if (!this->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
-                this->update_lp(u, *v_it, false);
+                this->update_ll(u, *v_it, false);
             }
         }
 
@@ -190,25 +183,21 @@ public:
 
         //identify strong components
         if (this->is_base_vertex(u)){
-            // std::cout << vertex2literal(u,dfs->n/2) << " is a base vertex!" << std::endl;
             Vertex v;
             (*nscc)++;
-            do
-            {
+            do {
                 v = (*stack).top();
                 (*stack).pop();
                 (*in_stack)[v] = false;
                 (*sc_labeling)[v] = *nscc;
-                // std::cout << "Assigned SC (" << *nscc << ") to vertex: ";
-                // std::cout << vertex2literal(u,dfs->n/2) << std::endl;
             } while (v != u);
         }
     }
 
-    
-    /* ==========================================
-     *          Find Truth Assignment
-     * ========================================== */
+    /* ====================================================
+     *                Find Truth Assignment
+     * ==================================================== */
+
     // Finds and prints truth assignment for represented CNF
     std::vector<bool> find_truth_assignment(int n_variables){
         std::vector<bool> assg(n_variables);
@@ -223,20 +212,18 @@ public:
         return assg;
     }
     
-    /* ==========================================
-     *            Helper Methods
-     * ========================================== */
+    /* ====================================================
+     *                   Helper Methods
+     * ==================================================== */
+
     // Update lowlink if smaller candidate    
-    void update_lp(Vertex u, Vertex v, bool use_lp){
+    void update_ll(Vertex u, Vertex v, bool use_lp){
         int candidate_val;
 
         if(use_lp) candidate_val = lowlink[v];
         else candidate_val = discovery_time[v];
         
         if(lowlink[u] > candidate_val) lowlink[u] = candidate_val;
-     
-        // std::cout << "lowlink of vertex " << vertex2literal(u, n/2);
-        // std::cout << " is now " << lowlink[u] << std::endl;
     }
 
     bool is_tree_arc(Vertex u, Vertex v){
@@ -245,16 +232,13 @@ public:
     }
 
     bool is_base_vertex(Vertex u){
-        // std::cout << "is Vertex " << vertex2literal(u, n/2) << " a base value? ";
-        // std::cout << "d: " << discovery_time[u] << " ll: " << lowlink[u];
-        // std::cout << " Answer: " << (discovery_time[u] == lowlink[u]) << std::endl;
         return discovery_time[u] == lowlink[u];
     }
 };
 
-/* ==============================================
- *                    main
- * ============================================== */
+/* ========================================================
+ *                         main
+ * ======================================================== */
 
 int main(int argc, char** argv)
 {
@@ -264,54 +248,30 @@ int main(int argc, char** argv)
 
     std::cin >> d >> n_variables >> n_clauses;
 
-    // std::cout << "Read d: " << d << std::endl;
-    // std::cout << "Read n (n_variables): " <<  n_variables << std::endl;
-    // std::cout << "Read m (n_clauses): " <<  n_clauses << std::endl;
-    
     Digraph dig(2*n_variables); // One vertex for each literal
-   
-    // std::cout << "Created digraph with |V|: "<< boost::num_vertices(dig);
-    // std::cout << std::endl;
 
     while(n_clauses--){
         int a, b; 
-        
+
         std::cin >> a >> b;
-        // std::cout << "Read clause: " << a << " "<< b << std::endl;
 
         boost::add_edge(
             literal2vertex(-a, n_variables),
             literal2vertex(b, n_variables),
             dig);
 
-        // std::cout << "Adding edge: ";
-        // std::cout << literal2vertex(-a, n_variables) << " (" << -a << ")";
-        // std::cout << " <-> ";
-        // std::cout << literal2vertex(b, n_variables) << " (" << b << ")";
-        // std::cout << std::endl;
-
         boost::add_edge(
             literal2vertex(-b, n_variables),
             literal2vertex(a, n_variables),
             dig);
-
-        // std::cout << "Adding edge: ";
-        // std::cout << literal2vertex(-b, n_variables) << " (" << -b << ")";
-        // std::cout << " <-> ";
-        // std::cout << literal2vertex(a, n_variables) << " (" << a << ")";
-        // std::cout << std::endl;
-
-        // std::cout << "|V|: " << boost::num_vertices(dig);
-        // std::cout << " |A|: " << boost::num_edges(dig);
-        // std::cout << std::endl;
-
     }
 
-    // d = 1;
-    if (d==2) describe_digraph(dig);
+    if (d==2) 
+        describe_digraph(dig);
     else {
         DFS dfs(&dig);
         sc_labeling = dfs.label_vertexes_by_strong_comp();
+
         if (d==1){
             // Iterate through vertexes and print which strong 
             // component it belongs to.
@@ -320,6 +280,7 @@ int main(int argc, char** argv)
                 std::cout << sc_labeling[*v_it];
                 if (v_it < v_it_end-1) std::cout << " ";
             }
+
             std::cout << std::endl;
         } else {
             int pos_label, neg_label;
@@ -330,18 +291,18 @@ int main(int argc, char** argv)
                 // -> the CNF has no satisfying truth assignment
                 if(pos_label == neg_label){
                     std::cout << "NO" << std::endl;
-                    return 0; // end code
+                    return 0; // end execution
                 }
             }
             // Find truth assignment
             std::cout << "YES ";
             std::vector<bool> assg = dfs.find_truth_assignment(n_variables);
-            
+
             for(int i = 0; i < n_variables; i++){
                 std::cout << assg[i];
                 if (i < n_variables-1) std::cout << " ";
             }
-            
+
             std::cout << std::endl;
         }
     }
