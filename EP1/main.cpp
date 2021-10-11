@@ -38,37 +38,38 @@ public:
     static const short BLACK = 2;
 
     // Instance data
-    int time, n;
+    int time, n, next;
     Digraph* dig;
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
     std::vector<int> lowlink;
+    std::vector<Vertex> top_order;
     std::vector<Vertex> parent;
 
     DFS(Digraph* dig) {
         this->n = boost::num_vertices(*dig);
-        this->time = 0;
+        this->next = this->time = 0;
         this->color = std::vector<int>(this->n, WHITE);
         this->discovery_time = std::vector<int>(this->n, 0);
         this->finish_time = std::vector<int>(this->n, 0);
-        this->parent = std::vector<Vertex>(this->n);
         this->lowlink = std::vector<int>(this->n, 0);
+        this->parent = std::vector<Vertex>(this->n);
+        this->top_order = std::vector<Vertex>(this->n);
     };
 
-    
+
     /* ==========================================
      *      Strong Component Labeling Methods
      * ========================================== */
     
-    //For each vertex, print each strong component it belongs to
     std::vector<int> label_vertexes_by_strong_comp(){
         
         std::vector<int> sc_labeling(this->n, -1);
         std::vector<bool> in_stack(this->n, false);
         std::stack<Vertex> stack;
         Digraph::vertex_iterator v_it, v_it_end;
-        int nscc = 0; 
+        int nscc = 0;
 
         // 1.2: Main Loop
         std::tie(v_it, v_it_end) = boost::vertices(*(this->dig));
@@ -87,19 +88,20 @@ public:
      * ========================================== */
     // Visit u
     void discover(Vertex u){
-        time++;
-        discovery_time[u] = time;
-        lowlink[u] = time;
-        color[u] = GRAY;
+        this->time++;
+        this->discovery_time[u] = this->time;
+        this->lowlink[u] = this->time;
+        this->color[u] = DFS::GRAY;
         // std::cout << "Discovered vertex: " << vertex2literal(u,n/2);
         // std::cout << " [" << time << "]" << std::endl;
     }
 
     // Finish visiting u
     void finish(Vertex u){
-        time++;
-        finish_time[u] = time;
-        color[u] = BLACK;
+        this->time++;
+        this->finish_time[u] = time;
+        this->color[u] = DFS::BLACK;
+        this->top_order[u] = this->time;
         // std::cout << "Left vertex: " << vertex2literal(u, n/2);
         // std::cout << " [" << time << "]" << std::endl;
     }
@@ -171,8 +173,7 @@ public:
         if(use_lp) candidate_val = lowlink[v];
         else candidate_val = discovery_time[v];
         
-        if(lowlink[u] > candidate_val) 
-            lowlink[u] = candidate_val;
+        if(lowlink[u] > candidate_val) lowlink[u] = candidate_val;
      
         // std::cout << "lowlink of vertex " << vertex2literal(u, n/2);
         // std::cout << " is now " << lowlink[u] << std::endl;
@@ -259,8 +260,6 @@ int main(int argc, char** argv)
             }
             std::cout << std::endl;
         } else {
-            // std::cout << "Debbuging level 0 not implemented yet." << std::endl;
-
             int pos_label, neg_label;
             for(int i = 1; i <= n_variables; i++){
                 pos_label = sc_labeling[literal2vertex( i, n_variables)];
