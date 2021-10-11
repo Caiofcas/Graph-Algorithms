@@ -267,7 +267,21 @@ int main(int argc, char** argv)
             }
             std::cout << std::endl;
         } else {
-            std::cout << "Debbuging level 0 not implemented yet." << std::endl;
+            // std::cout << "Debbuging level 0 not implemented yet." << std::endl;
+
+            int pos_label, neg_label;
+            for(int i = 1; i <= n_variables; i++){
+                pos_label = sc_labeling[literal2vertex( i, n_variables)];
+                neg_label = sc_labeling[literal2vertex(-i, n_variables)];
+                // !x_n and x_n are in the same SC
+                // -> the CNF has no satisfying truth assignment
+                if(pos_label == neg_label){
+                    std::cout << "NO" << std::endl;
+                    return 0; // end code
+                }
+            }
+            // Find truth assignment
+            std::cout << "YES" << std::endl;
         }
     }
 }
