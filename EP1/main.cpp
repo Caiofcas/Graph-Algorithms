@@ -48,7 +48,9 @@ public:
     std::vector<Vertex> parent;
 
     DFS(Digraph* dig) {
+        // std::cout << "Start constructor" << std::endl;
         this->n = boost::num_vertices(*dig);
+        this->dig = dig;
         this->next = this->time = 0;
         this->color = std::vector<int>(this->n, WHITE);
         this->discovery_time = std::vector<int>(this->n, 0);
@@ -56,11 +58,12 @@ public:
         this->lowlink = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
         this->top_order = std::vector<Vertex>(this->n);
+        // std::cout << "End constructor" << std::endl;
     };
 
 
     /* ==========================================
-     *      Strong Component Labeling Methods
+     *          Strong Component Labeling
      * ========================================== */
     
     std::vector<int> label_vertexes_by_strong_comp(){
@@ -118,7 +121,7 @@ public:
         this->discover(u);
         (*stack).push(u);
         (*in_stack)[u] = true;
-        // std::cout << "Put vertex " << vertex2literal(u,dfs->n/2);
+        // std::cout << "Put vertex " << vertex2literal(u,this->n/2);
         // std::cout << " in stack (size:" << stack->size() << ")" << std::endl;
 
         // Visit adjacent vertices to u
@@ -163,6 +166,24 @@ public:
         }
     }
 
+    
+    /* ==========================================
+     *          Find Truth Assignment
+     * ========================================== */
+    // Finds and prints truth assignment for represented CNF
+    std::vector<bool> find_truth_assignment(int n_variables){
+        std::vector<bool> assg(n_variables);
+        int pos_ord, neg_ord;
+        for(int i = 1; i <= n_variables; i++){
+            pos_ord = this->top_order[literal2vertex( i, n_variables)];
+            neg_ord = this->top_order[literal2vertex(-i, n_variables)];
+
+            if(pos_ord > neg_ord) assg[i-1] = false;
+            else assg[i-1] = true; 
+        }
+        return assg;
+    }
+    
     /* ==========================================
      *            Helper Methods
      * ========================================== */
@@ -272,7 +293,13 @@ int main(int argc, char** argv)
                 }
             }
             // Find truth assignment
-            std::cout << "YES" << std::endl;
+            std::cout << "YES ";
+            std::vector<bool> assg = dfs.find_truth_assignment(n_variables);
+            
+            for(int i = 0; i < n_variables; i++)
+                std::cout << assg[i] << " ";
+            
+            std::cout << std::endl;
         }
     }
 }
