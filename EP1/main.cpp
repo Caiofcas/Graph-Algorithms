@@ -1,8 +1,47 @@
 #include <iostream>
-#include "astg.hpp"
 #include <stack>
+#include <array>
+#define BOOST_ALLOW_DEPRECATED_HEADERS // silence warnings
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
 
+typedef boost::adjacency_list<boost::vecS,
+                              boost::vecS,
+                              boost::directedS> Digraph;
 
+typedef boost::graph_traits<Digraph>::vertex_descriptor Vertex;
+
+/* ==============================================
+ *         literal <-> vertex Helpers
+ * ============================================== */
+
+/* Will consider:
+ *   [0,n-1] "normal literals"
+ *   [n,2n-1] "negated literals"
+ * to access  x_l <-> vertex l-1
+ * to_access !x_l <-> vertex l-1(+n) */
+
+Vertex literal2vertex(int l, int n){
+    // l: literal to be converted
+    // n: number of variables ((|V|)
+    Vertex r;
+
+    if (l < 0) r = (-1*l) -1 + n;
+    else r = l-1;
+
+    return r;
+}
+
+int vertex2literal(Vertex v, int n){
+    // v: vertex to be converted
+    // n: number of variables ((|V|)
+    int r;
+
+    if (v >= static_cast<unsigned int>(n)) r = -(v - n + 1);
+    else r = v + 1;
+
+    return r;
+}
 
 /* ==============================================
  *              Debugging level 2
@@ -27,7 +66,7 @@ void describe_digraph(Digraph dig){
 
 
 /* ==============================================
- *              Debugging level 1
+ *            Debugging levels 1,0
  * ============================================== */
 
 class DFS {
@@ -213,8 +252,9 @@ public:
     }
 };
 
-
-
+/* ==============================================
+ *                    main
+ * ============================================== */
 
 int main(int argc, char** argv)
 {
