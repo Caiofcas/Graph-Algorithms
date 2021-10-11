@@ -39,19 +39,21 @@ public:
 
     // Instance data
     int time, n;
+    Digraph* dig;
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
     std::vector<int> lowlink;
     std::vector<Vertex> parent;
-    DFS(int n_vert) {
-        n = n_vert;
-        time = 0;
-        color = std::vector<int>(n, WHITE);
-        discovery_time = std::vector<int>(n, 0);
-        finish_time = std::vector<int>(n, 0);
-        parent = std::vector<Vertex>(n);
-        lowlink = std::vector<int>(n, 0);
+
+    DFS(Digraph* dig) {
+        this->n = boost::num_vertices(*dig);
+        this->time = 0;
+        this->color = std::vector<int>(this->n, WHITE);
+        this->discovery_time = std::vector<int>(this->n, 0);
+        this->finish_time = std::vector<int>(this->n, 0);
+        this->parent = std::vector<Vertex>(this->n);
+        this->lowlink = std::vector<int>(this->n, 0);
     };
 
     
@@ -60,31 +62,21 @@ public:
      * ========================================== */
     
     //For each vertex, print each strong component it belongs to
-    static std::vector<int> label_vertexes_by_strong_comp(Digraph* dig){
-        int n_vert, nscc; 
-        n_vert = boost::num_vertices(*dig);
+    std::vector<int> label_vertexes_by_strong_comp(){
         
-        // 1: Find strong components (Tarjan)
-        
-        // 1.1: Setup
-        DFS dfs(n_vert);
-        std::vector<int> sc_labeling(n_vert, -1);
-        std::vector<bool> in_stack(n_vert, false);
+        std::vector<int> sc_labeling(this->n, -1);
+        std::vector<bool> in_stack(this->n, false);
         std::stack<Vertex> stack;
         Digraph::vertex_iterator v_it, v_it_end;
-
-        nscc = 0;
+        int nscc = 0; 
 
         // 1.2: Main Loop
-        std::tie(v_it, v_it_end) = boost::vertices(*dig);
+        std::tie(v_it, v_it_end) = boost::vertices(*(this->dig));
         for(; v_it != v_it_end; v_it++){
-            if(dfs.color[*v_it] == DFS::WHITE){
-                dfs.visit(
-                    *v_it,
-                    &stack, &in_stack,
-                    &nscc, &sc_labeling,
-                    dig
-                );
+            if(this->color[*v_it] == DFS::WHITE){
+                this->visit(*v_it,
+                            &stack, &in_stack,
+                            &nscc, &sc_labeling);
             }
         }
 
@@ -114,12 +106,11 @@ public:
 
     // Main DFS method
     void visit(
-            Vertex u,
-            std::stack<Vertex>* stack,
-            std::vector<bool>* in_stack,
-            int* nscc,
-            std::vector<int>* sc_labeling,
-            Digraph* dig)
+        Vertex u,
+        std::stack<Vertex>* stack,
+        std::vector<bool>* in_stack,
+        int* nscc,
+        std::vector<int>* sc_labeling)
         {
         
         this->discover(u);
@@ -130,17 +121,17 @@ public:
 
         // Visit adjacent vertices to u
         Digraph::adjacency_iterator v_it, v_it_end;
-        std::tie(v_it,v_it_end) = boost::adjacent_vertices(u, *dig);
+        std::tie(v_it,v_it_end) = boost::adjacent_vertices(u, *(this->dig));
 
         for(; v_it != v_it_end; v_it++){
             if(this->color[*v_it] == DFS::WHITE){
                 this->parent[*v_it] = u;
                 this->visit(
                     *v_it,
-                    stack, in_stack,
-                    nscc,
-                    sc_labeling,
-                    dig
+                    stack, 
+                    in_stack,
+                    nscc, 
+                    sc_labeling
                 );
                 // update lowpoint
                 this->update_lp(u, *v_it, true);
@@ -257,7 +248,8 @@ int main(int argc, char** argv)
     // d = 1;
     if (d==2) describe_digraph(dig);
     else {
-        sc_labeling = DFS::label_vertexes_by_strong_comp(&dig);
+        DFS dfs(&dig);
+        sc_labeling = dfs.label_vertexes_by_strong_comp();
         if (d==1){
             // Iterate through vertexes and print which strong 
             // component it belongs to.
