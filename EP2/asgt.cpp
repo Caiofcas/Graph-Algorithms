@@ -14,7 +14,7 @@ public:
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
-    std::vector<int> lowlink;
+    std::vector<int> low;
     std::vector<Vertex> top_order;
     std::vector<Vertex> parent;
 
@@ -25,7 +25,7 @@ public:
         this->color = std::vector<int>(this->n, WHITE);
         this->discovery_time = std::vector<int>(this->n, 0);
         this->finish_time = std::vector<int>(this->n, 0);
-        this->lowlink = std::vector<int>(this->n, 0);
+        this->low = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
         this->top_order = std::vector<Vertex>(this->n);
     };
@@ -62,7 +62,7 @@ public:
     void discover(Vertex u){
         this->time++;
         this->discovery_time[u] = this->time;
-        this->lowlink[u] = this->time;
+        this->low[u] = this->time;
         this->color[u] = DFS::GRAY;
     }
 
@@ -101,12 +101,12 @@ public:
                     nscc, 
                     sc_labeling
                 );
-                // update lowlink
-                this->update_ll(u, *v_it, true);
+                // update low
+                this->update_low(u, *v_it, true);
             }
             // (u,v) is back or cross arc AND v is in stack 
             else if (!this->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
-                this->update_ll(u, *v_it, false);
+                this->update_low(u, *v_it, false);
             }
         }
 
@@ -129,14 +129,20 @@ public:
      *                   Helper Methods
      * ==================================================== */
 
-    // Update lowlink if smaller candidate    
-    void update_ll(Vertex u, Vertex v, bool use_lp){
+    // Update low if smaller candidate    
+    // TODO: update calculation, should be:
+    // 
+    // low[u] := min {
+    //           d[u]
+    //           d[w] , where {v, w} is a back edge and v is a descendant of u
+    // }
+    void update_low(Vertex u, Vertex v, bool use_lp){
         int candidate_val;
 
-        if(use_lp) candidate_val = lowlink[v];
+        if(use_lp) candidate_val = low[v];
         else candidate_val = discovery_time[v];
         
-        if(lowlink[u] > candidate_val) lowlink[u] = candidate_val;
+        if(low[u] > candidate_val) low[u] = candidate_val;
     }
 
     bool is_tree_arc(Vertex u, Vertex v){
@@ -145,7 +151,7 @@ public:
     }
 
     bool is_base_vertex(Vertex u){
-        return discovery_time[u] == lowlink[u];
+        return discovery_time[u] == low[u];
     }
 };
 
