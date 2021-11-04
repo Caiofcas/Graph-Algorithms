@@ -16,6 +16,7 @@ public:
     std::vector<int> finish_time;
     std::vector<int> num_children;
     std::vector<int> low;
+    std::vector<bool> cut_vertex;
     std::vector<Vertex> parent;
 
     DFS(Graph* gr) {
@@ -31,6 +32,7 @@ public:
         this->finish_time = std::vector<int>(this->n, 0);
         this->num_children = std::vector<int>(this->n, 0);
         this->low = std::vector<int>(this->n, 0);
+        this->cut_vertex = std::vector<bool>(this->n, false);
         this->parent = std::vector<Vertex>(this->n, this->n);
     }
 
@@ -42,9 +44,9 @@ public:
     // Visit u
     void discover(Vertex u) {
         this->time++;
-        this->discovery_time[u] = this->time;
+        this->discovery_time[u] = this->low[u] = this->time;
         this->color[u] = DFS::GRAY;
-        std::cout << "[discover] Vertex " << u+1 << " time: " << time << std::endl;
+        // std::cout << "[discover] Vertex " << u+1 << " time: " << time << std::endl;
     }
 
     // Finish visiting u
@@ -52,7 +54,7 @@ public:
         this->time++;
         this->finish_time[u] = time;
         this->color[u] = DFS::BLACK;
-        std::cout << "[finish] Vertex " << u+1 << " time: " << time << std::endl;
+        // std::cout << "[finish] Vertex " << u+1 << " time: " << time << std::endl;
     }
 
     // DFS visit method
@@ -64,12 +66,31 @@ public:
         std::tie(v_it,v_it_end) = boost::adjacent_vertices(u, *(this->gr));
 
         for(; v_it != v_it_end; v_it++){
+            // std::cout << "[visit] On vertex " << u+1 << " visiting " << *v_it+1 << std::endl;
 
-            std::cout << "[visit] On vertex " << u+1 << " visiting " << *v_it+1 << std::endl;
-            if(this->color[*v_it] == DFS::WHITE){
+            // Visit undiscovered vertexes
+            if (this->color[*v_it] == DFS::WHITE){
                 this->num_children[u]++;
                 this->parent[*v_it] = u;
                 this->visit(*v_it);
+
+                if (low[*v_it] < low[u]) {
+                    // child can reach vertex up the tree
+                    // std::cout << "[visit] Vertex " << *v_it+1 << " can reach up the tree";
+                    // std::cout << " up to Vertex discovered in time " << low[*v_it] << ". ";
+                    // std::cout << "So Vertex " << u+1 << " can also reach up the tree to that vertex." << std::endl;
+                    low[u] = low[*v_it];
+                } else {
+                    // child can't reach vertex up the tree
+                    // so it is a cutvertex by this criteria
+                    cut_vertex[u] = true;
+                }
+            }
+
+            // Is back edge and not to parent. Way up the tree
+            if (parent[u] != *v_it && is_back_edge(u, *v_it)){
+                if (discovery_time[*v_it] < low[u])
+                    low[u] = discovery_time[*v_it];
             }
         }
 
@@ -101,20 +122,12 @@ public:
     //           d[u]
     //           d[w] , where {v, w} is a back edge and v is a descendant of u
     // }
-    void update_low(Vertex u, Vertex v) {
-        std::cout << "[update_low] u: "<< u+1 << " v: " << v+1 << std::endl;
-    }
 
-    bool is_back_arc(Vertex u, Vertex v) {
-        std::cout << "[is_back_arc] " << u+1 << " " << v+1 << std::endl;
-        std::cout << "[is_back_arc] d[" << u+1 << "]: " << discovery_time[u];
-        std::cout << " f[" << u+1 << "]: "  << finish_time[u] << std::endl;
-        std::cout << "[is_back_arc] d[" << v+1 << "]: " << discovery_time[v];
-        std::cout << " f[" << v+1 << "]: "  << finish_time[v] << std::endl;
-        std::cout <<  "[is_back_arc] " << ((discovery_time[v] < discovery_time[u]) && (finish_time[u] <= finish_time[v])) << std::endl;
+    bool is_back_edge(Vertex cur_vert, Vertex other_vert) {
+        // std::cout << "[is_back_edge] " << cur_vert+1 << " " << other_vert+1 << std::endl;
+        // std::cout <<  "[is_back_edge] " << (discovery_time[cur_vert] > discovery_time[other_vert]) << std::endl;
 
-        return (discovery_time[v] < discovery_time[u]) \
-             && (finish_time[u] <= finish_time[v]);
+        return discovery_time[cur_vert] > discovery_time[other_vert];
     }
 
     bool is_dfs_root(Vertex u) {
@@ -122,7 +135,8 @@ public:
     }
 
     bool is_cutvertex(Vertex u) {
-        return false;
+        if (is_dfs_root(u)) return num_children[u] >= 2;
+        return cut_vertex[u];
     }
 };
 
