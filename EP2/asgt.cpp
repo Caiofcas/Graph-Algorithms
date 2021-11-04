@@ -14,6 +14,7 @@ public:
     std::vector<int> color;
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
+    std::vector<int> num_children;
     std::vector<int> low;
     std::vector<Vertex> parent;
 
@@ -28,6 +29,7 @@ public:
         this->color = std::vector<int>(this->n, WHITE);
         this->discovery_time = std::vector<int>(this->n, 0);
         this->finish_time = std::vector<int>(this->n, 0);
+        this->num_children = std::vector<int>(this->n, 0);
         this->low = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
     }
@@ -62,6 +64,7 @@ public:
 
         for(; v_it != v_it_end; v_it++){
             if(this->color[*v_it] == DFS::WHITE){
+                this->num_children[u]++;
                 this->parent[*v_it] = u;
                 this->visit(*v_it);
                 // update low
@@ -109,19 +112,42 @@ public:
         return (discovery_time[v] < discovery_time[u]) \
              & (finish_time[u] < finish_time[v]);
     }
+
+    bool is_dfs_root(Vertex u) {
+        return this->parent[u] == (unsigned int) this->n;
+    }
+
+    bool is_cutvertex(Vertex u) {
+        /* 2 cases for being cutvertex:
+         * 
+         * 1. Is root and has 2+ children;
+         * 2. Is not root and low[u] < d[u]
+         * 
+         */
+
+        if (this->is_dfs_root(u)){
+            return this->num_children[u] >= 2;
+        }
+        
+        return this->low[u] <= this->discovery_time[u];
+    }
 };
 
-void find_cut_vertexes(Graph &g) {
+void find_cut_vertexes(Graph &g, DFS *dfs) {
     for (const auto& vertex : boost::make_iterator_range(boost::vertices(g))) {
-        g[vertex].cutvertex = false;
+        g[vertex].cutvertex = dfs->is_cutvertex(vertex);
     }
 }
 
 void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
+
+    DFS dfs(&g);
+    dfs.perform_dfs();
+
     /* fill everything with dummy values */
     if (fill_cutvxs)
     {
-        find_cut_vertexes(g);
+        find_cut_vertexes(g, &dfs);
     };
     
     for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
