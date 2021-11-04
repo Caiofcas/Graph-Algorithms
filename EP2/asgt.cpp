@@ -20,13 +20,17 @@ public:
     DFS(Graph* gr) {
         this->n = boost::num_vertices(*gr);
         this->gr = gr;
+        this->set_initial_state();
+    };
+
+    void set_initial_state() {
         this->next = this->time = 0;
         this->color = std::vector<int>(this->n, WHITE);
         this->discovery_time = std::vector<int>(this->n, 0);
         this->finish_time = std::vector<int>(this->n, 0);
         this->low = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
-    };
+    }
 
 
     /* ====================================================
@@ -48,9 +52,8 @@ public:
         this->color[u] = DFS::BLACK;
     }
 
-    // Main DFS method
+    // DFS visit method
     void visit(Vertex u) {
-        
         this->discover(u);
 
         // Visit adjacent vertices to u
@@ -72,7 +75,22 @@ public:
 
         this->finish(u);
     }
-    
+
+
+    // Main DFS method
+    void perform_dfs() {
+        if (this->time) this->set_initial_state();
+        
+        Graph::vertex_iterator v_it, v_it_end;
+
+        std::tie(v_it, v_it_end) = boost::vertices(*(this->gr));
+        for(; v_it != v_it_end; v_it++){
+            if(this->color[*v_it] == DFS::WHITE){
+                this->visit(*v_it);
+            }
+        }
+    }
+
     /* ====================================================
      *                   Helper Methods
      * ==================================================== */
@@ -94,21 +112,20 @@ public:
 };
 
 void find_cut_vertexes(Graph &g) {
-  for (const auto& vertex : boost::make_iterator_range(boost::vertices(g))) {
-    g[vertex].cutvertex = false;
-  }
-
+    for (const auto& vertex : boost::make_iterator_range(boost::vertices(g))) {
+        g[vertex].cutvertex = false;
+    }
 }
 
 void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
-  /* fill everything with dummy values */
-  if (fill_cutvxs)
-  {
-    find_cut_vertexes(g);
-  };
-  
-  for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
-    g[edge].bcc = 0;
-    g[edge].bridge = false;
-  }
+    /* fill everything with dummy values */
+    if (fill_cutvxs)
+    {
+        find_cut_vertexes(g);
+    };
+    
+    for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
+        g[edge].bcc = 0;
+        g[edge].bridge = false;
+    }
 }
