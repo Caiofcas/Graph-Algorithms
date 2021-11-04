@@ -15,7 +15,6 @@ public:
     std::vector<int> discovery_time;
     std::vector<int> finish_time;
     std::vector<int> low;
-    std::vector<Vertex> top_order;
     std::vector<Vertex> parent;
 
     DFS(Graph* gr) {
@@ -27,7 +26,6 @@ public:
         this->finish_time = std::vector<int>(this->n, 0);
         this->low = std::vector<int>(this->n, 0);
         this->parent = std::vector<Vertex>(this->n);
-        this->top_order = std::vector<Vertex>(this->n);
     };
 
     /* ====================================================
@@ -71,7 +69,6 @@ public:
         this->time++;
         this->finish_time[u] = time;
         this->color[u] = DFS::BLACK;
-        this->top_order[u] = this->time;
     }
 
     // Main DFS method
@@ -102,52 +99,34 @@ public:
                     sc_labeling
                 );
                 // update low
-                this->update_low(u, *v_it, true);
+                this->update_low(u, *v_it);
             }
-            // (u,v) is back or cross arc AND v is in stack 
-            else if (!this->is_tree_arc(u, *v_it) && (*in_stack)[*v_it]){
-                this->update_low(u, *v_it, false);
+            // (u,v) is back arc AND v is not parent of u 
+            else if (this->is_back_arc(u, *v_it) && this->parent[u] != *v_it){
+                this->update_low(u, *v_it);
             }
         }
 
         this->finish(u);
-
-        //identify strong components
-        if (this->is_base_vertex(u)){
-            Vertex v;
-            (*nscc)++;
-            do {
-                v = (*stack).top();
-                (*stack).pop();
-                (*in_stack)[v] = false;
-                (*sc_labeling)[v] = *nscc;
-            } while (v != u);
-        }
     }
     
     /* ====================================================
      *                   Helper Methods
      * ==================================================== */
 
-    // Update low if smaller candidate    
-    // TODO: update calculation, should be:
+    // Update low if smaller candidate
     // 
     // low[u] := min {
     //           d[u]
     //           d[w] , where {v, w} is a back edge and v is a descendant of u
     // }
-    void update_low(Vertex u, Vertex v, bool use_lp){
-        int candidate_val;
-
-        if(use_lp) candidate_val = low[v];
-        else candidate_val = discovery_time[v];
-        
-        if(low[u] > candidate_val) low[u] = candidate_val;
+    void update_low(Vertex u, Vertex v){
+        if(low[u] > low[v]) low[u] = low[v];
     }
 
-    bool is_tree_arc(Vertex u, Vertex v){
-        return (discovery_time[u] < discovery_time[v]) \
-             & (finish_time[v] < finish_time[u]);
+    bool is_back_arc(Vertex u, Vertex v){
+        return (discovery_time[v] < discovery_time[u]) \
+             & (finish_time[u] < finish_time[v]);
     }
 
     bool is_base_vertex(Vertex u){
