@@ -1,5 +1,5 @@
 #include "asgt.h"
-#include <stack>
+#include <iostream>
 
 class DFS {
 public:
@@ -31,7 +31,7 @@ public:
         this->finish_time = std::vector<int>(this->n, 0);
         this->num_children = std::vector<int>(this->n, 0);
         this->low = std::vector<int>(this->n, 0);
-        this->parent = std::vector<Vertex>(this->n);
+        this->parent = std::vector<Vertex>(this->n, this->n);
     }
 
 
@@ -45,6 +45,7 @@ public:
         this->discovery_time[u] = this->time;
         this->low[u] = this->time;
         this->color[u] = DFS::GRAY;
+        std::cout << "[discover] Vertex " << u+1 << " time: " << time << std::endl;
     }
 
     // Finish visiting u
@@ -52,6 +53,7 @@ public:
         this->time++;
         this->finish_time[u] = time;
         this->color[u] = DFS::BLACK;
+        std::cout << "[finish] Vertex " << u+1 << " time: " << time << std::endl;
     }
 
     // DFS visit method
@@ -63,6 +65,8 @@ public:
         std::tie(v_it,v_it_end) = boost::adjacent_vertices(u, *(this->gr));
 
         for(; v_it != v_it_end; v_it++){
+
+            std::cout << "[visit] On vertex " << u+1 << " visiting " << *v_it+1 << std::endl;
             if(this->color[*v_it] == DFS::WHITE){
                 this->num_children[u]++;
                 this->parent[*v_it] = u;
@@ -71,8 +75,13 @@ public:
                 this->update_low(u, *v_it);
             }
             // (u,v) is back arc AND v is not parent of u 
-            else if (this->is_back_arc(u, *v_it) && this->parent[u] != *v_it){
-                this->update_low(u, *v_it);
+            else if (this->parent[u] != *v_it && this->is_back_arc(u, *v_it)){
+                std::cout << "[visit] update low[" << u+1 << "] based on " << *v_it+1 << std::endl;
+                std::cout << "[visit] low[" << u+1 << "]: " << low[u] << std::endl;
+                if (low[u] >= discovery_time[*v_it]){
+                    low[u] = discovery_time[*v_it];
+                }
+                std::cout << "[visit] new low[" << u+1 << "]: " << low[u] << std::endl;
             }
         }
 
@@ -105,12 +114,23 @@ public:
     //           d[w] , where {v, w} is a back edge and v is a descendant of u
     // }
     void update_low(Vertex u, Vertex v) {
+        std::cout << "[update_low] u: "<< u+1 << " v: " << v+1 << std::endl;
+        std::cout << "[update_low] low[" << u+1 << "]: " << low[u] << std::endl;
+        std::cout << "[update_low] low[" << v+1 << "]: " << low[v] << std::endl;
         if(low[u] > low[v]) low[u] = low[v];
+        std::cout << "[update_low] new low[" << u+1 << "]: " << low[u] << std::endl;        
     }
 
     bool is_back_arc(Vertex u, Vertex v) {
+        std::cout << "[is_back_arc] " << u+1 << " " << v+1 << std::endl;
+        std::cout << "[is_back_arc] d[" << u+1 << "]: " << discovery_time[u];
+        std::cout << " f[" << u+1 << "]: "  << finish_time[u] << std::endl;
+        std::cout << "[is_back_arc] d[" << v+1 << "]: " << discovery_time[v];
+        std::cout << " f[" << v+1 << "]: "  << finish_time[v] << std::endl;
+        std::cout <<  "[is_back_arc] " << ((discovery_time[v] < discovery_time[u]) && (finish_time[u] <= finish_time[v])) << std::endl;
+
         return (discovery_time[v] < discovery_time[u]) \
-             & (finish_time[u] < finish_time[v]);
+             && (finish_time[u] <= finish_time[v]);
     }
 
     bool is_dfs_root(Vertex u) {
@@ -126,10 +146,16 @@ public:
          */
 
         if (this->is_dfs_root(u)){
-            return this->num_children[u] >= 2;
+            std::cout << "[is_cutvertex] Vertex " << u+1 << " is dfs root" << std::endl; 
+            return num_children[u] >= 2;
         }
+        std::cout << "[is_cutvertex] Vertex " << u+1 << " is not dfs root" << std::endl; 
         
-        return this->low[u] <= this->discovery_time[u];
+        std::cout << "[is_cutvertex] low[" << u+1 << "]: " << low[u] << std::endl;
+        std::cout << "[is_cutvertex] d[" << u+1 << "]: " << discovery_time[u] << std::endl;
+       std::cout << "[is_cutvertex] Vertex " << u+1 << " : " << (low[u] >= discovery_time[u]) << std::endl;
+
+        return low[u] >= discovery_time[u];
     }
 };
 
