@@ -43,7 +43,6 @@ public:
     void discover(Vertex u) {
         this->time++;
         this->discovery_time[u] = this->time;
-        this->low[u] = this->time;
         this->color[u] = DFS::GRAY;
         std::cout << "[discover] Vertex " << u+1 << " time: " << time << std::endl;
     }
@@ -71,17 +70,6 @@ public:
                 this->num_children[u]++;
                 this->parent[*v_it] = u;
                 this->visit(*v_it);
-                // update low
-                this->update_low(u, *v_it);
-            }
-            // (u,v) is back arc AND v is not parent of u 
-            else if (this->parent[u] != *v_it && this->is_back_arc(u, *v_it)){
-                std::cout << "[visit] update low[" << u+1 << "] based on " << *v_it+1 << std::endl;
-                std::cout << "[visit] low[" << u+1 << "]: " << low[u] << std::endl;
-                if (low[u] >= discovery_time[*v_it]){
-                    low[u] = discovery_time[*v_it];
-                }
-                std::cout << "[visit] new low[" << u+1 << "]: " << low[u] << std::endl;
             }
         }
 
@@ -115,10 +103,6 @@ public:
     // }
     void update_low(Vertex u, Vertex v) {
         std::cout << "[update_low] u: "<< u+1 << " v: " << v+1 << std::endl;
-        std::cout << "[update_low] low[" << u+1 << "]: " << low[u] << std::endl;
-        std::cout << "[update_low] low[" << v+1 << "]: " << low[v] << std::endl;
-        if(low[u] > low[v]) low[u] = low[v];
-        std::cout << "[update_low] new low[" << u+1 << "]: " << low[u] << std::endl;        
     }
 
     bool is_back_arc(Vertex u, Vertex v) {
@@ -138,24 +122,7 @@ public:
     }
 
     bool is_cutvertex(Vertex u) {
-        /* 2 cases for being cutvertex:
-         * 
-         * 1. Is root and has 2+ children;
-         * 2. Is not root and low[u] < d[u]
-         * 
-         */
-
-        if (this->is_dfs_root(u)){
-            std::cout << "[is_cutvertex] Vertex " << u+1 << " is dfs root" << std::endl; 
-            return num_children[u] >= 2;
-        }
-        std::cout << "[is_cutvertex] Vertex " << u+1 << " is not dfs root" << std::endl; 
-        
-        std::cout << "[is_cutvertex] low[" << u+1 << "]: " << low[u] << std::endl;
-        std::cout << "[is_cutvertex] d[" << u+1 << "]: " << discovery_time[u] << std::endl;
-       std::cout << "[is_cutvertex] Vertex " << u+1 << " : " << (low[u] >= discovery_time[u]) << std::endl;
-
-        return low[u] >= discovery_time[u];
+        return false;
     }
 };
 
