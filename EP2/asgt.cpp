@@ -28,36 +28,13 @@ public:
         this->parent = std::vector<Vertex>(this->n);
     };
 
-    /* ====================================================
-     *                 Strong Component Labeling
-     * ==================================================== */
-    
-    std::vector<int> label_vertexes_by_strong_comp(){
-        
-        std::vector<int> sc_labeling(this->n, -1);
-        std::vector<bool> in_stack(this->n, false);
-        std::stack<Vertex> stack;
-        Graph::vertex_iterator v_it, v_it_end;
-        int nscc = 0;
-
-        std::tie(v_it, v_it_end) = boost::vertices(*(this->gr));
-        for(; v_it != v_it_end; v_it++){
-            if(this->color[*v_it] == DFS::WHITE){
-                this->visit(*v_it,
-                            &stack, &in_stack,
-                            &nscc, &sc_labeling);
-            }
-        }
-
-        return sc_labeling;
-    }
 
     /* ====================================================
      *                 Performing DFS Methods
      * ==================================================== */
 
     // Visit u
-    void discover(Vertex u){
+    void discover(Vertex u) {
         this->time++;
         this->discovery_time[u] = this->time;
         this->low[u] = this->time;
@@ -65,24 +42,16 @@ public:
     }
 
     // Finish visiting u
-    void finish(Vertex u){
+    void finish(Vertex u) {
         this->time++;
         this->finish_time[u] = time;
         this->color[u] = DFS::BLACK;
     }
 
     // Main DFS method
-    void visit(
-        Vertex u,
-        std::stack<Vertex>* stack,
-        std::vector<bool>* in_stack,
-        int* nscc,
-        std::vector<int>* sc_labeling)
-        {
+    void visit(Vertex u) {
         
         this->discover(u);
-        (*stack).push(u);
-        (*in_stack)[u] = true;
 
         // Visit adjacent vertices to u
         Graph::adjacency_iterator v_it, v_it_end;
@@ -91,13 +60,7 @@ public:
         for(; v_it != v_it_end; v_it++){
             if(this->color[*v_it] == DFS::WHITE){
                 this->parent[*v_it] = u;
-                this->visit(
-                    *v_it,
-                    stack, 
-                    in_stack,
-                    nscc, 
-                    sc_labeling
-                );
+                this->visit(*v_it);
                 // update low
                 this->update_low(u, *v_it);
             }
@@ -120,30 +83,24 @@ public:
     //           d[u]
     //           d[w] , where {v, w} is a back edge and v is a descendant of u
     // }
-    void update_low(Vertex u, Vertex v){
+    void update_low(Vertex u, Vertex v) {
         if(low[u] > low[v]) low[u] = low[v];
     }
 
-    bool is_back_arc(Vertex u, Vertex v){
+    bool is_back_arc(Vertex u, Vertex v) {
         return (discovery_time[v] < discovery_time[u]) \
              & (finish_time[u] < finish_time[v]);
     }
-
-    bool is_base_vertex(Vertex u){
-        return discovery_time[u] == low[u];
-    }
 };
 
-void find_cut_vertexes(Graph &g)
-{
+void find_cut_vertexes(Graph &g) {
   for (const auto& vertex : boost::make_iterator_range(boost::vertices(g))) {
     g[vertex].cutvertex = false;
   }
 
 }
 
-void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges)
-{
+void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
   /* fill everything with dummy values */
   if (fill_cutvxs)
   {
