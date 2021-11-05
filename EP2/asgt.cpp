@@ -46,7 +46,7 @@ public:
         this->time++;
         this->discovery_time[u] = this->low[u] = this->time;
         this->color[u] = DFS::GRAY;
-        // std::cout << "[discover] Vertex " << u+1 << " time: " << time << std::endl;
+        // std::cout << "[discover] Vertex " << u+1 << " d: " << time << std::endl;
     }
 
     // Finish visiting u
@@ -74,23 +74,29 @@ public:
                 this->parent[*v_it] = u;
                 this->visit(*v_it);
 
-                if (low[*v_it] < low[u]) {
+                if (low[*v_it] < discovery_time[u]) {
                     // child can reach vertex up the tree
                     // std::cout << "[visit] Vertex " << *v_it+1 << " can reach up the tree";
                     // std::cout << " up to Vertex discovered in time " << low[*v_it] << ". ";
                     // std::cout << "So Vertex " << u+1 << " can also reach up the tree to that vertex." << std::endl;
-                    low[u] = low[*v_it];
+                    // only update lowlink if smaller
+                    
+                    if (low[u] > low[*v_it]) low[u] = low[*v_it];
                 } else {
                     // child can't reach vertex up the tree
                     // so it is a cutvertex by this criteria
+                    // std::cout << "[visit] Vertex " << u+1 << " is a cut vertex due to " << *v_it+1 << std::endl;
                     cut_vertex[u] = true;
                 }
             }
 
             // Is back edge and not to parent. Way up the tree
             if (parent[u] != *v_it && is_back_edge(u, *v_it)){
+                // std::cout << "[visit] Back edge from " << u+1 << " to " << *v_it+1 << std::endl;
                 if (discovery_time[*v_it] < low[u])
                     low[u] = discovery_time[*v_it];
+                
+                // std::cout << "[visit] low[" << u+1 << "]: " << low[u] << std::endl;
             }
         }
 
@@ -135,7 +141,9 @@ public:
     }
 
     bool is_cutvertex(Vertex u) {
+        // std::cout << "[is_cutvertex] Vertex " << u+1 << std::endl;
         if (is_dfs_root(u)) return num_children[u] >= 2;
+        // std::cout << "[is_cutvertex] is not dfs root." << std::endl;
         return cut_vertex[u];
     }
 };
@@ -151,12 +159,10 @@ void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
     DFS dfs(&g);
     dfs.perform_dfs();
 
-    /* fill everything with dummy values */
     if (fill_cutvxs)
-    {
         find_cut_vertexes(g, &dfs);
-    };
     
+    /* fill everything with dummy values */
     for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
         g[edge].bcc = 0;
         g[edge].bridge = false;
