@@ -55,14 +55,12 @@ public:
         // Go up tree edges from target until we reach source, 
         // the set traveled + back_edge is a cycle
         while (parent[cur_vert] != back_edge.m_source) {
-            // std::cout << "opa" << std::endl;
             auto pair = boost::edge(cur_vert, parent[cur_vert], (*gr));
             if (!pair.second) {
                 // Reached root
                 break;
             }
             edge_it = pair.first;
-            // std::cout << "opa" << std::endl;
             
             if ((*gr)[edge_it].bcc) 
                 label = (*gr)[edge_it].bcc;
@@ -73,11 +71,9 @@ public:
             stack.push(edge_it);
             seen[edge_it.m_source] = true;
             cur_vert = edge_it.m_target;
-            // std::cout << cur_vert+1 << std::endl;
         }
         if(label < 0) 
             label = ++(*cur_count);
-        // std::cout << "opa!!" << std::endl;
          do {
             edge_it = stack.top();
             stack.pop();
