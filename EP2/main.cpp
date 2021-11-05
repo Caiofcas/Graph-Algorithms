@@ -12,7 +12,6 @@ int main(int argc, char** argv)
 {
   int debug; std::cin >> debug;
 
-  debug = 2;
   typename boost::graph_traits<Graph>::vertices_size_type n; std::cin >> n;
 
   Graph graph(n);

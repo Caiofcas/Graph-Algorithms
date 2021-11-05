@@ -1,5 +1,6 @@
 #include "asgt.h"
 #include <iostream>
+#include <stack>
 
 class DFS {
 public:
@@ -38,6 +39,50 @@ public:
         this->parent = std::vector<Vertex>(this->n, this->n);
     }
 
+    /* ====================================================
+     *                      Label Edges
+     * ==================================================== */
+
+    void find_cycle(Edge back_edge, int* cur_count) {
+        std::stack<Edge> stack;
+        int label = -1;
+        Vertex cur_vert = back_edge.m_target;
+        Edge edge_it;
+
+        stack.push(back_edge);
+        // Go up tree edges from target until we reach source, 
+        // the set traveled + back_edge is a cycle
+        while (parent[cur_vert] != back_edge.m_source) {
+            edge_it = boost::edge(cur_vert, parent[cur_vert], (*gr)).first;
+            std::cout << "source: " << edge_it.m_source;
+            std::cout << " target: " << edge_it.m_target;
+            std::cout << " cur:" << cur_vert << std::endl;
+            cur_vert = edge_it.m_target;
+        }
+        //  do {
+        //     v = (*stack).top();
+        //     (*stack).pop();
+        //     (*in_stack)[v] = false;
+        //     (*sc_labeling)[v] = *nscc;
+        // } while (v != u);
+    }
+
+
+    void label_edges_by_bcc(){
+        int bcc_count = 0;
+        
+        for (const auto& edge : boost::make_iterator_range(boost::edges(*gr))) {
+            if (!(*gr)[edge].bcc) { // check if it was already set
+                if (is_bridge(edge)){
+                    (*gr)[edge].bcc = ++bcc_count;
+                } else if (is_back_edge(edge.m_source, edge.m_target)) {
+                    find_cycle(edge, &bcc_count);
+                }
+            } 
+        }
+
+
+    }
 
     /* ====================================================
      *                 Performing DFS Methods
@@ -179,14 +224,15 @@ void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
     DFS dfs(&g);
     dfs.perform_dfs();
 
-    if (fill_cutvxs)
+    if (fill_cutvxs) {
         find_cut_vertexes(g, &dfs);
-
-    if (fill_bridges)
-        find_bridges(g, &dfs);
-    
-    /* fill everything with dummy values */
-    for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
-        g[edge].bcc = 0;
+        return;
     }
+
+    if (fill_bridges) {
+        find_bridges(g, &dfs);
+        return;
+    }
+    
+    dfs.label_edges_by_bcc();
 }
