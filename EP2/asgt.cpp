@@ -45,6 +45,8 @@ public:
 
     void find_cycle(Edge back_edge, int* cur_count) {
         std::stack<Edge> stack;
+        std::vector<bool> seen(this->n, false);
+
         int label = -1;
         Vertex cur_vert = back_edge.m_target;
         Edge edge_it;
@@ -53,18 +55,34 @@ public:
         // Go up tree edges from target until we reach source, 
         // the set traveled + back_edge is a cycle
         while (parent[cur_vert] != back_edge.m_source) {
-            edge_it = boost::edge(cur_vert, parent[cur_vert], (*gr)).first;
-            std::cout << "source: " << edge_it.m_source;
-            std::cout << " target: " << edge_it.m_target;
-            std::cout << " cur:" << cur_vert << std::endl;
+            // std::cout << "opa" << std::endl;
+            auto pair = boost::edge(cur_vert, parent[cur_vert], (*gr));
+            if (!pair.second) {
+                // Reached root
+                break;
+            }
+            edge_it = pair.first;
+            // std::cout << "opa" << std::endl;
+            
+            if ((*gr)[edge_it].bcc) 
+                label = (*gr)[edge_it].bcc;
+
+            if (seen[edge_it.m_target]) 
+                break;
+
+            stack.push(edge_it);
+            seen[edge_it.m_source] = true;
             cur_vert = edge_it.m_target;
+            // std::cout << cur_vert+1 << std::endl;
         }
-        //  do {
-        //     v = (*stack).top();
-        //     (*stack).pop();
-        //     (*in_stack)[v] = false;
-        //     (*sc_labeling)[v] = *nscc;
-        // } while (v != u);
+        if(label < 0) 
+            label = ++(*cur_count);
+        // std::cout << "opa!!" << std::endl;
+         do {
+            edge_it = stack.top();
+            stack.pop();
+            (*gr)[edge_it].bcc = label;
+        } while (!stack.empty());
     }
 
 
@@ -75,9 +93,12 @@ public:
             if (!(*gr)[edge].bcc) { // check if it was already set
                 if (is_bridge(edge)){
                     (*gr)[edge].bcc = ++bcc_count;
-                } else if (is_back_edge(edge.m_source, edge.m_target)) {
-                    find_cycle(edge, &bcc_count);
                 }
+                // Could not make it work =(
+
+                // } else if (is_back_edge(edge.m_source, edge.m_target)) {
+                //     find_cycle(edge, &bcc_count);
+                // }
             } 
         }
 
