@@ -25,6 +25,8 @@ public:
         this->set_initial_state();
     };
 
+
+    // Helper to reset DFS if needed
     void set_initial_state() {
         this->next = this->time = 0;
         this->color = std::vector<int>(this->n, WHITE);
@@ -49,6 +51,7 @@ public:
         // std::cout << "[discover] Vertex " << u+1 << " d: " << time << std::endl;
     }
 
+ 
     // Finish visiting u
     void finish(Vertex u) {
         this->time++;
@@ -57,6 +60,7 @@ public:
         // std::cout << "[finish] Vertex " << u+1 << " time: " << time << std::endl;
     }
 
+ 
     // DFS visit method
     void visit(Vertex u) {
         this->discover(u);
@@ -106,7 +110,7 @@ public:
         this->finish(u);
     }
 
-
+ 
     // Main DFS method
     void perform_dfs() {
         if (this->time) this->set_initial_state();
@@ -122,15 +126,8 @@ public:
     }
 
     /* ====================================================
-     *                   Helper Methods
+     *                   Statement Methods
      * ==================================================== */
-
-    // Update low if smaller candidate
-    // 
-    // low[u] := min {
-    //           d[u]
-    //           d[w] , where {v, w} is a back edge and v is a descendant of u
-    // }
 
     bool is_back_edge(Vertex cur_vert, Vertex other_vert) {
         // std::cout << "[is_back_edge] " << cur_vert+1 << " " << other_vert+1 << std::endl;
@@ -139,9 +136,11 @@ public:
         return discovery_time[cur_vert] > discovery_time[other_vert];
     }
 
+
     bool is_dfs_root(Vertex u) {
         return this->parent[u] == (unsigned int) this->n;
     }
+
 
     bool is_bridge(Edge e) {
         if (is_back_edge(e.m_source, e.m_target)) return false;
@@ -150,13 +149,16 @@ public:
         return low[e.m_target] > discovery_time[e.m_source];
     }
 
+
     bool is_cutvertex(Vertex u) {
         // std::cout << "[is_cutvertex] Vertex " << u+1 << std::endl;
         if (is_dfs_root(u)) return num_children[u] >= 2;
         // std::cout << "[is_cutvertex] is not dfs root." << std::endl;
         return cut_vertex[u];
     }
+
 };
+
 
 void find_cut_vertexes(Graph &g, DFS *dfs) {
     for (const auto& vertex : boost::make_iterator_range(boost::vertices(g))) {
@@ -164,11 +166,13 @@ void find_cut_vertexes(Graph &g, DFS *dfs) {
     }
 }
 
+
 void find_bridges(Graph &g, DFS *dfs) {
     for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
         g[edge].bridge = dfs->is_bridge(edge);
     }
 }
+
 
 void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
 
