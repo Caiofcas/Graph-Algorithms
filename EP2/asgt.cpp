@@ -143,6 +143,13 @@ public:
         return this->parent[u] == (unsigned int) this->n;
     }
 
+    bool is_bridge(Edge e) {
+        if (is_back_edge(e.m_source, e.m_target)) return false;
+        
+        // Is tree edge (m_source discovered sooner)
+        return low[e.m_target] > discovery_time[e.m_source];
+    }
+
     bool is_cutvertex(Vertex u) {
         // std::cout << "[is_cutvertex] Vertex " << u+1 << std::endl;
         if (is_dfs_root(u)) return num_children[u] >= 2;
@@ -157,6 +164,12 @@ void find_cut_vertexes(Graph &g, DFS *dfs) {
     }
 }
 
+void find_bridges(Graph &g, DFS *dfs) {
+    for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
+        g[edge].bridge = dfs->is_bridge(edge);
+    }
+}
+
 void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
 
     DFS dfs(&g);
@@ -164,10 +177,12 @@ void compute_bcc (Graph &g, bool fill_cutvxs, bool fill_bridges) {
 
     if (fill_cutvxs)
         find_cut_vertexes(g, &dfs);
+
+    if (fill_bridges)
+        find_bridges(g, &dfs);
     
     /* fill everything with dummy values */
     for (const auto& edge : boost::make_iterator_range(boost::edges(g))) {
         g[edge].bcc = 0;
-        g[edge].bridge = false;
     }
 }
