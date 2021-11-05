@@ -76,21 +76,24 @@ public:
 
                 if (low[*v_it] < discovery_time[u]) {
                     // child can reach vertex up the tree
+
                     // std::cout << "[visit] Vertex " << *v_it+1 << " can reach up the tree";
                     // std::cout << " up to Vertex discovered in time " << low[*v_it] << ". ";
                     // std::cout << "So Vertex " << u+1 << " can also reach up the tree to that vertex." << std::endl;
-                    // only update lowlink if smaller
                     
+                    // only update lowlink if smaller
                     if (low[u] > low[*v_it]) low[u] = low[*v_it];
                 } else {
                     // child can't reach vertex up the tree
-                    // so it is a cutvertex by this criteria
+                    // so it is a cutvertex by this criteria, 
+                    // must still check if it's root later.
+
                     // std::cout << "[visit] Vertex " << u+1 << " is a cut vertex due to " << *v_it+1 << std::endl;
                     cut_vertex[u] = true;
                 }
             }
 
-            // Is back edge and not to parent. Way up the tree
+            // Is back edge and not to parent. Found a way up the tree
             if (parent[u] != *v_it && is_back_edge(u, *v_it)){
                 // std::cout << "[visit] Back edge from " << u+1 << " to " << *v_it+1 << std::endl;
                 if (discovery_time[*v_it] < low[u])
