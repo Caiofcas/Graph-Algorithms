@@ -12,31 +12,50 @@
 #include "digraph.h"
 #include "potential.h"
 
-/* The code in this template file is all "bogus". It just illustrates
- * how to return answers back to main.cpp. */
-
-/* The following declarations shorten the bogus code below. Feel free
- * to change/drop them. */
-using boost::add_edge;
-using boost::num_vertices;
 using boost::out_edges;
 using std::vector;
+using std::cout;
+using std::endl;
 
 Digraph build_digraph(const Digraph& market)
 {
-  /* placeholder for NRVO */
-  Digraph digraph(num_vertices(market));
+  cout << "=============================================" << endl;
+  cout << "            Building Aux Digraph" << endl;
+  cout << "=============================================" << endl;
 
-  /* flip some signs in the arc costs below to exercise the many
-   * execution pathways */
+  Digraph digraph(boost::num_vertices(market));
+  Digraph::vertex_iterator v_it, v_it_end;
+  Arc aux_arc, orig_arc;
+  Vertex u, v;
 
-  /* create arcs 01 and 10 */
-  Arc a0, a1;
-  std::tie(a0, std::ignore) = add_edge(0, 1, digraph);
-  digraph[a0].cost = 11.0;
-  std::tie(a1, std::ignore) = add_edge(1, 0, digraph);
-  digraph[a1].cost = -17.0;
- 
+  // Iteration stuff
+  std::tie(v_it, v_it_end) = boost::vertices(market);
+  for(; v_it != v_it_end; v_it++){
+    cout << "Iterating through vertex " << *v_it+1 << endl;
+    auto u_it = boost::adjacent_vertices(*v_it, market);
+    for(; u_it.first != u_it.second; u_it.first++){
+        
+        // Give some nicer names to variables
+        u = *(u_it.first); v = *(v_it);
+
+        cout << "Adding arc " << v+1 << u+1 << endl;
+
+        // Create arc in aux digraph
+        aux_arc = boost::add_edge(v, u, digraph).first;
+        
+        // Get original arv cost
+        orig_arc = boost::edge(v, u, market).first;
+        
+        // Add new arc cost
+        digraph[aux_arc].cost = -log10(market[orig_arc].cost);
+        cout << "Arc cost: " << -log10(market[orig_arc].cost) << endl;
+    }
+  }
+
+  cout << "=============================================" << endl;
+  cout << "        Finished Building Aux Digraph" << endl;
+  cout << "=============================================" << endl;
+
   return digraph;
 }
 
