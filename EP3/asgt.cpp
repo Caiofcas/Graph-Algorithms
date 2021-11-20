@@ -68,48 +68,29 @@ Digraph build_digraph(const Digraph& market)
   return digraph;
 }
 
-std::tuple<bool,
-           boost::optional<NegativeCycle>,
-           boost::optional<FeasiblePotential>>
-has_negative_cycle(Digraph& digraph)
-{
-  cout << "=============================================" << endl;
-  cout << "         Entered has_negative_cycle" << endl;
-  cout << "=============================================" << endl;
-  // MARCEL STARTS
-  /* const Arc& a0 = *(out_edges(0, digraph).first);
-  // const Arc& a1 = *(out_edges(1, digraph).first);
-  // Walk walk(digraph, 0);
-  // walk.extend(a0);
-  // walk.extend(a1); */
-  /* Replace `NegativeCycle(walk)` with `boost::none` in the next
-   * command to trigger "negative cycle reported but not computed".
-   * Comment the whole `return` and uncomment the remaining lines to
-   * exercise construction of a feasible potential. */
-  // encourage RVO
-  // return {true, NegativeCycle(walk), boost::none};
-  /* Replace `FeasiblePotential(digraph, y)` with `boost::none` in the
-   * next command to trigger "feasible potential reported but not
-   * computed". */
-  // MARCEL ENDS
+// TODO need to check for neg cycles on each run
+void
+bellman_ford(
+  Vertex s,
+  vector<double> &d,
+  vector<Walk*> &W,
+  Digraph& digraph,
+  int width
+  ){
 
-
-  // PROBLEM: disconnected components will not be calculated
-  int l, n = num_vertices(digraph), width;
-  Vertex v, u;
-  vector<double> d(n, INFINITY), old_d(n, INFINITY);
-  vector<Walk*> W(n, NULL), old_W(n, NULL);
+  int l, n = num_vertices(digraph);
+  vector<double> old_d(n, INFINITY);
+  vector<Walk*> old_W(n, NULL);
+  Vertex u, v;
   Digraph::vertex_iterator u_it, u_it_end;
   Digraph::adjacency_iterator v_it, v_it_end; 
-  Digraph::in_edge_iterator ei, edge_end;
 
-  width = count_digits(n);
-  // Set s as first vertex (0)
-  // W[0] = <0>
-  d[0] = old_d[0] = 0;
+
+  // Set s (starting value) values
+  d[s] = old_d[s] = 0;
+  // W[s] = <s>
 
   // We iterate on u, not on v, due to how adjacent_vertices work
-
   for(l=0; l < n; l++) {
     for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
@@ -153,12 +134,57 @@ has_negative_cycle(Digraph& digraph)
 
   }
 
-  cout << "Calculated distances (Final):" << endl;
+  cout << "Calculated distances (End BF run):" << endl;
   for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
 
+}
+
+
+std::tuple<bool,
+           boost::optional<NegativeCycle>,
+           boost::optional<FeasiblePotential>>
+has_negative_cycle(Digraph& digraph)
+{
+  cout << "=============================================" << endl;
+  cout << "         Entered has_negative_cycle" << endl;
+  cout << "=============================================" << endl;
+  // MARCEL STARTS
+  /* const Arc& a0 = *(out_edges(0, digraph).first);
+  // const Arc& a1 = *(out_edges(1, digraph).first);
+  // Walk walk(digraph, 0);
+  // walk.extend(a0);
+  // walk.extend(a1); */
+  /* Replace `NegativeCycle(walk)` with `boost::none` in the next
+   * command to trigger "negative cycle reported but not computed".
+   * Comment the whole `return` and uncomment the remaining lines to
+   * exercise construction of a feasible potential. */
+  // encourage RVO
+  // return {true, NegativeCycle(walk), boost::none};
+  /* Replace `FeasiblePotential(digraph, y)` with `boost::none` in the
+   * next command to trigger "feasible potential reported but not
+   * computed". */
+  // MARCEL ENDS
+
+
+  // PROBLEM: disconnected components will not be calculated
+  int n = num_vertices(digraph), width;
+  vector<double> d(n, INFINITY);
+  vector<Walk*> W(n, NULL);
+  Digraph::vertex_iterator u_it, u_it_end;
+  Digraph::adjacency_iterator v_it, v_it_end; 
+
+  width = count_digits(n);
+  // Set s as first vertex (0)
+  bellman_ford(0, d, W, digraph, width);
+
+  cout << "Calculated distances (Final):" << endl;
+  for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
+        u_it != u_it_end; u_it++){
+    cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
+  }
 
   cout << "=============================================" << endl;
   cout << "          Exiting has_negative_cycle" << endl;
