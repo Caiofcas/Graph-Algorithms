@@ -64,27 +64,87 @@ std::tuple<bool,
            boost::optional<FeasiblePotential>>
 has_negative_cycle(Digraph& digraph)
 {
-  const Arc& a0 = *(out_edges(0, digraph).first);
-  const Arc& a1 = *(out_edges(1, digraph).first);
-
-  Walk walk(digraph, 0);
-  walk.extend(a0);
-  walk.extend(a1);
-
+  cout << "=============================================" << endl;
+  cout << "         Entered has_negative_cycle" << endl;
+  cout << "=============================================" << endl;
+  // MARCEL STARTS
+  /* const Arc& a0 = *(out_edges(0, digraph).first);
+  // const Arc& a1 = *(out_edges(1, digraph).first);
+  // Walk walk(digraph, 0);
+  // walk.extend(a0);
+  // walk.extend(a1); */
   /* Replace `NegativeCycle(walk)` with `boost::none` in the next
    * command to trigger "negative cycle reported but not computed".
    * Comment the whole `return` and uncomment the remaining lines to
    * exercise construction of a feasible potential. */
-
   // encourage RVO
-  return {true, NegativeCycle(walk), boost::none};
-
+  // return {true, NegativeCycle(walk), boost::none};
   /* Replace `FeasiblePotential(digraph, y)` with `boost::none` in the
    * next command to trigger "feasible potential reported but not
    * computed". */
+  // MARCEL ENDS
 
-  // encourage RVO
+
+  // Bogus implementation
+  int l, n = num_vertices(digraph);
+  Vertex v, u;
+  vector<double> d(n, INFINITY), old_d(n, INFINITY);
+  vector<Walk*> W(n, NULL), old_W(n, NULL);
+  Digraph::vertex_iterator u_it, u_it_end;
+  Digraph::adjacency_iterator v_it, v_it_end; 
+  Digraph::in_edge_iterator ei, edge_end;
+
+  // We iterate on u, not on v, due to how adjacent_vertices work
+
+  for(l=1; l < n; l++) {
+    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
+        u_it != u_it_end; u_it++){
+      u = *u_it;
+      cout << "Iterating on vertex " << u+1 << endl;
+
+      cout << "Will now iterate through vertices that are reached by " << u+1 << endl;
+
+      for(std::tie(v_it, v_it_end) = boost::adjacent_vertices(u, digraph);
+        v_it != v_it_end; v_it++){
+
+        v = (*v_it);
+        cout << "Iterating on Path vertex " << v+1 << endl; 
+
+        auto aux_arc = boost::edge(u, v, digraph).first;
+
+        cout << "Edge " << u+1 << v+1 << " has cost " << digraph[aux_arc].cost << endl;
+        if (d[v] > old_d[u] + digraph[aux_arc].cost){
+          d[v] = old_d[u] + digraph[aux_arc].cost;
+          // W[v] = old_W[u] + v;
+          // TODO: walk manipulation
+          cout << "Updated d[" << v+1 << "]" << endl;
+        }
+        cout << "d[" << v+1 << "]: " << d[v] << endl;
+      }
+    }
+    // Time step (if l == n no need to perform it, keep last iteration values around)
+
+    if (l == n) break;
+    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
+        u_it != u_it_end; u_it++){
+          u = *u_it;
+          d[u] = old_d[u];
+          W[u] = old_W[u];
+    }
+  }
+
+  cout << "Calculated distances:" << endl;
+  for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
+        u_it != u_it_end; u_it++){
+    cout << "d[" << *u_it+1 << "]: " << d[*u_it] << endl;
+  }
+
+
+
   vector<double> y(num_vertices(digraph), 0.0);
+  cout << "=============================================" << endl;
+  cout << "          Exiting has_negative_cycle" << endl;
+  cout << "=============================================" << endl;  
   return {false, boost::none, FeasiblePotential(digraph, y)};
 }
 
