@@ -75,10 +75,14 @@ bellman_ford(
   vector<double> &d,
   vector<Walk*> &W,
   Digraph& digraph,
-  int width
+  int n, int width
   ){
 
-  int l, n = num_vertices(digraph);
+  cout << "=============================================" << endl;
+  cout << "          Entering bellman_ford" << endl;
+  cout << "=============================================" << endl;
+
+  int l;
   vector<double> old_d(n, INFINITY);
   vector<Walk*> old_W(n, NULL);
   Vertex u, v;
@@ -95,7 +99,7 @@ bellman_ford(
     for(std::tie(u_it, u_end) = boost::vertices(digraph);
         u_it != u_end; u_it++){
       u = *u_it;
-      cout << "Iterating on vertex " << u+1 << endl;
+      cout << "Iterating on Path vertex " << u+1 << endl;
 
       cout << "Will now iterate through vertices that are reached by " << u+1 << endl;
 
@@ -103,11 +107,11 @@ bellman_ford(
         v_it != v_end; v_it++){
 
         v = (*v_it);
-        cout << "Iterating on Path vertex " << v+1 << endl; 
+        cout << "Iterating on vertex " << v+1 << endl; 
 
         auto aux_arc = boost::edge(u, v, digraph).first;
 
-        cout << "Edge " << u+1 << v+1 << " has cost " << digraph[aux_arc].cost << endl;
+        cout << "Edge (" << u+1 << ")(" << v+1 << ") has cost " << digraph[aux_arc].cost << endl;
         if (d[v] > old_d[u] + digraph[aux_arc].cost){
           d[v] = old_d[u] + digraph[aux_arc].cost;
           // W[v] = old_W[u] + v;
@@ -117,9 +121,10 @@ bellman_ford(
         cout << "d[" << v+1 << "]: " << d[v] << endl;
       }
     }
-    // Time step (if l == n no need to perform it, keep last iteration values around)
 
+    // Time step (if l == n no need to perform it, keep last iteration values around)
     if (l == n) break;
+
     for(std::tie(u_it, u_end) = boost::vertices(digraph);
         u_it != u_end; u_it++){
           u = *u_it;
@@ -140,6 +145,9 @@ bellman_ford(
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
 
+  cout << "=============================================" << endl;
+  cout << "          Exiting bellman_ford" << endl;
+  cout << "=============================================" << endl;
 }
 
 
@@ -157,27 +165,24 @@ has_negative_cycle(Digraph& digraph)
   // Walk walk(digraph, 0);
   // walk.extend(a0);
   // walk.extend(a1); */
-  /* Replace `NegativeCycle(walk)` with `boost::none` in the next
-   * command to trigger "negative cycle reported but not computed".
-   * Comment the whole `return` and uncomment the remaining lines to
-   * exercise construction of a feasible potential. */
-  // encourage RVO
-  // return {true, NegativeCycle(walk), boost::none};
-  /* Replace `FeasiblePotential(digraph, y)` with `boost::none` in the
-   * next command to trigger "feasible potential reported but not
-   * computed". */
   // MARCEL ENDS
 
 
-  // PROBLEM: disconnected components will not be calculated
   int n = num_vertices(digraph), width;
+  Vertex u;
   vector<double> d(n, INFINITY);
   vector<Walk*> W(n, NULL);
   Digraph::vertex_iterator u_it, u_end;
 
   width = count_digits(n);
   // Set s as first vertex (0)
-  bellman_ford(0, d, W, digraph, width);
+
+  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
+    u = *u_it;
+    if (d[u] == INFINITY)
+      bellman_ford(u, d, W, digraph, n, width);
+  }
 
   cout << "Calculated distances (Final):" << endl;
   for(std::tie(u_it, u_end) = boost::vertices(digraph);
@@ -187,7 +192,8 @@ has_negative_cycle(Digraph& digraph)
 
   cout << "=============================================" << endl;
   cout << "          Exiting has_negative_cycle" << endl;
-  cout << "=============================================" << endl;  
+  cout << "=============================================" << endl;
+
   return {false, boost::none, FeasiblePotential(digraph, d)};
 }
 
