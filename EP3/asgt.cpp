@@ -41,23 +41,22 @@ Digraph build_digraph(const Digraph& market)
   for(tie(v_it, v_end) = vertices(market); v_it != v_end; v_it++){
     cout << "Iterating through vertex " << *v_it+1 << endl;
 
-    for(auto u_it = adjacent_vertices(*v_it, market);
-      u_it.first != u_it.second; u_it.first++){
+    for(auto e_it = out_edges(*v_it, market);
+      e_it.first != e_it.second; e_it.first++){
         
         // Give some nicer names to variables
-        u = *(u_it.first); v = *(v_it);
+        orig_arc = *(e_it.first);
+        u = boost::target(orig_arc, market);
+        v = *(v_it);
 
         cout << "Adding arc (" << v+1 << ")(" << u+1 << ")" << endl;
 
         // Create arc in aux digraph
         aux_arc = boost::add_edge(v, u, digraph).first;
         
-        // Get original arv cost
-        orig_arc = boost::edge(v, u, market).first;
-        
         // Add new arc cost
-        digraph[aux_arc].cost = -log10(market[orig_arc].cost);
-        cout << "Arc cost: " << -log10(market[orig_arc].cost) << endl;
+        digraph[aux_arc].cost = -log(market[orig_arc].cost);
+        cout << "Arc cost: " << -log(market[orig_arc].cost) << endl;
     }
   }
 
@@ -86,6 +85,7 @@ bellman_ford(
   vector<double> old_d(n, INFINITY);
   vector<Walk*> old_W(n, NULL);
   Vertex u, v;
+  Arc aux_arc;
   Digraph::vertex_iterator u_it, u_end;
   Digraph::adjacency_iterator v_it, v_end; 
 
@@ -96,17 +96,20 @@ bellman_ford(
   // We iterate on u, not on v, due to how adjacent_vertices work
   for(l=0; l < n; l++) {
     for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
-      u = *u_it;
-      cout << "Iterating on Path vertex " << u+1 << endl;
+      cout << "Iterating on Path vertex " << *u_it+1 << endl;
 
-      cout << "Will now iterate through vertices that are reached by " << u+1 << endl;
+      cout << "Will now iterate through vertices that are reached by ";
+      cout << *u_it+1 << endl;
 
-      for(tie(v_it, v_end) = adjacent_vertices(u, digraph); v_it != v_end; v_it++){
+      for(auto e_it = out_edges(*u_it, digraph);
+      e_it.first != e_it.second; e_it.first++){
 
-        v = (*v_it);
+        // Give some nicer names to variables
+        aux_arc = *(e_it.first);
+        u = *u_it;
+        v = boost::target(aux_arc, digraph);
         cout << "Iterating on vertex " << v+1 << endl; 
 
-        auto aux_arc = boost::edge(u, v, digraph).first;
         cout << "Edge (" << u+1 << ")(" << v+1 << ") has cost ";
         cout << digraph[aux_arc].cost << endl;
 
@@ -212,7 +215,12 @@ FeasibleMultiplier build_feasmult(const FeasiblePotential& feaspot,
                                   const Digraph& aux_digraph,
                                   const Digraph& market)
 {
-  vector<double> z(num_vertices(market), 1.0);
+  int n = num_vertices(market);
+  vector<double> z(n);
+  vector<double> y = feaspot.potential();
+
+  for (int i = 0; i < n; i++)
+    z[i] = exp(-y[i]);
 
   // encourage RVO
   return FeasibleMultiplier(market, z);
