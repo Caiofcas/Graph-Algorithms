@@ -1,6 +1,5 @@
 #include "asgt.h"
 
-#include <utility>              // for std::get
 #include <tuple>
 #include <vector>
 #include <iomanip>              // for std::setw
@@ -13,18 +12,19 @@
 #include "digraph.h"
 #include "potential.h"
 
+using boost::adjacent_vertices;
 using boost::out_edges;
+using boost::vertices;
 using std::vector;
 using std::cout;
 using std::endl;
+using std::tie;
 
 
 static size_t count_digits(size_t n)
 {
   return std::to_string(n).size();
 }
-
-
 
 Digraph build_digraph(const Digraph& market)
 {
@@ -38,11 +38,11 @@ Digraph build_digraph(const Digraph& market)
   Vertex u, v;
 
   // Iteration stuff
-  std::tie(v_it, v_end) = boost::vertices(market);
-  for(; v_it != v_end; v_it++){
+  for(tie(v_it, v_end) = vertices(market); v_it != v_end; v_it++){
     cout << "Iterating through vertex " << *v_it+1 << endl;
-    auto u_it = boost::adjacent_vertices(*v_it, market);
-    for(; u_it.first != u_it.second; u_it.first++){
+
+    for(auto u_it = adjacent_vertices(*v_it, market);
+      u_it.first != u_it.second; u_it.first++){
         
         // Give some nicer names to variables
         u = *(u_it.first); v = *(v_it);
@@ -89,29 +89,27 @@ bellman_ford(
   Digraph::vertex_iterator u_it, u_end;
   Digraph::adjacency_iterator v_it, v_end; 
 
-
   // Set s (starting value) values
   d[s] = old_d[s] = 0;
   // W[s] = <s>
 
   // We iterate on u, not on v, due to how adjacent_vertices work
   for(l=0; l < n; l++) {
-    for(std::tie(u_it, u_end) = boost::vertices(digraph);
-        u_it != u_end; u_it++){
+    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
       u = *u_it;
       cout << "Iterating on Path vertex " << u+1 << endl;
 
       cout << "Will now iterate through vertices that are reached by " << u+1 << endl;
 
-      for(std::tie(v_it, v_end) = boost::adjacent_vertices(u, digraph);
-        v_it != v_end; v_it++){
+      for(tie(v_it, v_end) = adjacent_vertices(u, digraph); v_it != v_end; v_it++){
 
         v = (*v_it);
         cout << "Iterating on vertex " << v+1 << endl; 
 
         auto aux_arc = boost::edge(u, v, digraph).first;
+        cout << "Edge (" << u+1 << ")(" << v+1 << ") has cost ";
+        cout << digraph[aux_arc].cost << endl;
 
-        cout << "Edge (" << u+1 << ")(" << v+1 << ") has cost " << digraph[aux_arc].cost << endl;
         if (d[v] > old_d[u] + digraph[aux_arc].cost){
           d[v] = old_d[u] + digraph[aux_arc].cost;
           // W[v] = old_W[u] + v;
@@ -125,22 +123,19 @@ bellman_ford(
     // Time step (if l == n no need to perform it, keep last iteration values around)
     if (l == n) break;
 
-    for(std::tie(u_it, u_end) = boost::vertices(digraph);
-        u_it != u_end; u_it++){
-          u = *u_it;
-          old_d[u] = d[u];
-          old_W[u] = W[u];
+    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
+          old_d[*u_it] = d[*u_it];
+          old_W[*u_it] = W[*u_it];
     }
+
     cout << "Calculated distances ("<< l <<"):" << endl;
-    for(std::tie(u_it, u_end) = boost::vertices(digraph);
-        u_it != u_end; u_it++){
+    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++)
       cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
-    }
 
   }
 
   cout << "Calculated distances (End BF run):" << endl;
-  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+  for(tie(u_it, u_end) = vertices(digraph);
         u_it != u_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
@@ -177,7 +172,7 @@ has_negative_cycle(Digraph& digraph)
   width = count_digits(n);
   // Set s as first vertex (0)
 
-  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+  for(tie(u_it, u_end) = vertices(digraph);
         u_it != u_end; u_it++){
     u = *u_it;
     if (d[u] == INFINITY)
@@ -185,7 +180,7 @@ has_negative_cycle(Digraph& digraph)
   }
 
   cout << "Calculated distances (Final):" << endl;
-  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+  for(tie(u_it, u_end) = vertices(digraph);
         u_it != u_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
