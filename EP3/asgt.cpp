@@ -33,13 +33,13 @@ Digraph build_digraph(const Digraph& market)
   cout << "=============================================" << endl;
 
   Digraph digraph(boost::num_vertices(market));
-  Digraph::vertex_iterator v_it, v_it_end;
+  Digraph::vertex_iterator v_it, v_end;
   Arc aux_arc, orig_arc;
   Vertex u, v;
 
   // Iteration stuff
-  std::tie(v_it, v_it_end) = boost::vertices(market);
-  for(; v_it != v_it_end; v_it++){
+  std::tie(v_it, v_end) = boost::vertices(market);
+  for(; v_it != v_end; v_it++){
     cout << "Iterating through vertex " << *v_it+1 << endl;
     auto u_it = boost::adjacent_vertices(*v_it, market);
     for(; u_it.first != u_it.second; u_it.first++){
@@ -82,8 +82,8 @@ bellman_ford(
   vector<double> old_d(n, INFINITY);
   vector<Walk*> old_W(n, NULL);
   Vertex u, v;
-  Digraph::vertex_iterator u_it, u_it_end;
-  Digraph::adjacency_iterator v_it, v_it_end; 
+  Digraph::vertex_iterator u_it, u_end;
+  Digraph::adjacency_iterator v_it, v_end; 
 
 
   // Set s (starting value) values
@@ -92,15 +92,15 @@ bellman_ford(
 
   // We iterate on u, not on v, due to how adjacent_vertices work
   for(l=0; l < n; l++) {
-    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
-        u_it != u_it_end; u_it++){
+    for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
       u = *u_it;
       cout << "Iterating on vertex " << u+1 << endl;
 
       cout << "Will now iterate through vertices that are reached by " << u+1 << endl;
 
-      for(std::tie(v_it, v_it_end) = boost::adjacent_vertices(u, digraph);
-        v_it != v_it_end; v_it++){
+      for(std::tie(v_it, v_end) = boost::adjacent_vertices(u, digraph);
+        v_it != v_end; v_it++){
 
         v = (*v_it);
         cout << "Iterating on Path vertex " << v+1 << endl; 
@@ -120,23 +120,23 @@ bellman_ford(
     // Time step (if l == n no need to perform it, keep last iteration values around)
 
     if (l == n) break;
-    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
-        u_it != u_it_end; u_it++){
+    for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
           u = *u_it;
           old_d[u] = d[u];
           old_W[u] = W[u];
     }
     cout << "Calculated distances ("<< l <<"):" << endl;
-    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
-        u_it != u_it_end; u_it++){
+    for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
       cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
     }
 
   }
 
   cout << "Calculated distances (End BF run):" << endl;
-  for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
-        u_it != u_it_end; u_it++){
+  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
 
@@ -173,16 +173,15 @@ has_negative_cycle(Digraph& digraph)
   int n = num_vertices(digraph), width;
   vector<double> d(n, INFINITY);
   vector<Walk*> W(n, NULL);
-  Digraph::vertex_iterator u_it, u_it_end;
-  Digraph::adjacency_iterator v_it, v_it_end; 
+  Digraph::vertex_iterator u_it, u_end;
 
   width = count_digits(n);
   // Set s as first vertex (0)
   bellman_ford(0, d, W, digraph, width);
 
   cout << "Calculated distances (Final):" << endl;
-  for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
-        u_it != u_it_end; u_it++){
+  for(std::tie(u_it, u_end) = boost::vertices(digraph);
+        u_it != u_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
 
