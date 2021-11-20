@@ -3,6 +3,7 @@
 #include <utility>              // for std::get
 #include <tuple>
 #include <vector>
+#include <iomanip>              // for std::setw
 
 #define BOOST_ALLOW_DEPRECATED_HEADERS // silence warnings
 #include <boost/graph/adjacency_list.hpp>
@@ -16,6 +17,14 @@ using boost::out_edges;
 using std::vector;
 using std::cout;
 using std::endl;
+
+
+static size_t count_digits(size_t n)
+{
+  return std::to_string(n).size();
+}
+
+
 
 Digraph build_digraph(const Digraph& market)
 {
@@ -38,7 +47,7 @@ Digraph build_digraph(const Digraph& market)
         // Give some nicer names to variables
         u = *(u_it.first); v = *(v_it);
 
-        cout << "Adding arc " << v+1 << u+1 << endl;
+        cout << "Adding arc (" << v+1 << ")(" << u+1 << ")" << endl;
 
         // Create arc in aux digraph
         aux_arc = boost::add_edge(v, u, digraph).first;
@@ -85,8 +94,8 @@ has_negative_cycle(Digraph& digraph)
   // MARCEL ENDS
 
 
-  // Bogus implementation
-  int l, n = num_vertices(digraph);
+  // PROBLEM: disconnected components will not be calculated
+  int l, n = num_vertices(digraph), width;
   Vertex v, u;
   vector<double> d(n, INFINITY), old_d(n, INFINITY);
   vector<Walk*> W(n, NULL), old_W(n, NULL);
@@ -94,13 +103,14 @@ has_negative_cycle(Digraph& digraph)
   Digraph::adjacency_iterator v_it, v_it_end; 
   Digraph::in_edge_iterator ei, edge_end;
 
+  width = count_digits(n);
   // Set s as first vertex (0)
   // W[0] = <0>
   d[0] = old_d[0] = 0;
 
   // We iterate on u, not on v, due to how adjacent_vertices work
 
-  for(l=1; l < n; l++) {
+  for(l=0; l < n; l++) {
     for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
       u = *u_it;
@@ -138,15 +148,15 @@ has_negative_cycle(Digraph& digraph)
     cout << "Calculated distances ("<< l <<"):" << endl;
     for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
-      cout << "  d[" << *u_it+1 << "]: " << d[*u_it] << endl;
+      cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
     }
 
   }
 
-  cout << "Calculated distances:" << endl;
+  cout << "Calculated distances (Final):" << endl;
   for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
-    cout << "d[" << *u_it+1 << "]: " << d[*u_it] << endl;
+    cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
   }
 
 
