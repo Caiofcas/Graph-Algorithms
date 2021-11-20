@@ -94,6 +94,10 @@ has_negative_cycle(Digraph& digraph)
   Digraph::adjacency_iterator v_it, v_it_end; 
   Digraph::in_edge_iterator ei, edge_end;
 
+  // Set s as first vertex (0)
+  // W[0] = <0>
+  d[0] = old_d[0] = 0;
+
   // We iterate on u, not on v, due to how adjacent_vertices work
 
   for(l=1; l < n; l++) {
@@ -128,9 +132,15 @@ has_negative_cycle(Digraph& digraph)
     for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
         u_it != u_it_end; u_it++){
           u = *u_it;
-          d[u] = old_d[u];
-          W[u] = old_W[u];
+          old_d[u] = d[u];
+          old_W[u] = W[u];
     }
+    cout << "Calculated distances ("<< l <<"):" << endl;
+    for(std::tie(u_it, u_it_end) = boost::vertices(digraph);
+        u_it != u_it_end; u_it++){
+      cout << "  d[" << *u_it+1 << "]: " << d[*u_it] << endl;
+    }
+
   }
 
   cout << "Calculated distances:" << endl;
@@ -140,12 +150,10 @@ has_negative_cycle(Digraph& digraph)
   }
 
 
-
-  vector<double> y(num_vertices(digraph), 0.0);
   cout << "=============================================" << endl;
   cout << "          Exiting has_negative_cycle" << endl;
   cout << "=============================================" << endl;  
-  return {false, boost::none, FeasiblePotential(digraph, y)};
+  return {false, boost::none, FeasiblePotential(digraph, d)};
 }
 
 Loophole build_loophole(const NegativeCycle& negcycle,
