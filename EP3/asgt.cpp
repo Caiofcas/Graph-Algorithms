@@ -67,8 +67,7 @@ Digraph build_digraph(const Digraph& market)
   return digraph;
 }
 
-// TODO need to check for neg cycles on each run
-void bellman_ford(
+int bellman_ford(
   Vertex s,
   vector<double> &d,
   vector<Walk*> &W,
@@ -94,7 +93,7 @@ void bellman_ford(
   W[s] = new Walk(digraph, s);
 
   // We iterate on u, not on v, due to how adjacent_vertices work
-  for(l=0; l < n; l++) {
+  for(l=1; l <= n; l++) {
     for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
       cout << "Iterating on Path vertex " << *u_it+1 << endl;
 
@@ -118,16 +117,23 @@ void bellman_ford(
           cout << "Updated d[" << v+1 << "]" << endl;
 
           if(old_W[u] == NULL)
-            W[v] = new Walk(digraph, v);
+            W[v] = new Walk(digraph, u);
           else
             W[v] = new Walk(*old_W[u]);
 
-          W[v]->extend(aux_arc);
-          cout << "Updated W[" << v+1 << "]" << endl;
+          bool extend_suceeded = W[v]->extend(aux_arc);
+          cout << "Updated W[" << v+1 << "] " << extend_suceeded << endl;
           cout << "W[" << v+1 << "]: "<< W[v] << endl;
         }
         cout << "d[" << v+1 << "]: " << d[v] << endl;
       }
+    }
+
+    cout << "Calculated distances ("<< l <<"):" << endl;
+    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
+      cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
+      cout << "old_d[" << std::setw(width) << *u_it+1 << "]: " << old_d[*u_it] << endl;
+      cout << "  W[" << *u_it+1 << "]: " << W[*u_it] << endl;
     }
 
     // Time step (if l == n no need to perform it, keep last iteration values around)
@@ -137,24 +143,36 @@ void bellman_ford(
           old_d[*u_it] = d[*u_it];
           old_W[*u_it] = W[*u_it];
     }
-
-    cout << "Calculated distances ("<< l <<"):" << endl;
-    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
-      cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
-      cout << "  W[" << *u_it+1 << "]: " << W[*u_it] << endl;
-    }
-
   }
 
   cout << "Calculated distances (End BF run):" << endl;
   for(tie(u_it, u_end) = vertices(digraph);
         u_it != u_end; u_it++){
     cout << "d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
+    cout << "old_d[" << std::setw(width) << *u_it+1 << "]: " << old_d[*u_it] << endl;
+  }
+
+  cout << "Verifying if cycle has been found" << endl;
+  for(int i = 0; i < n; i++){
+    if (old_d[i] != d[i]){
+      cout << "Negative cycle on vertex " << i+1 << " with cost ";
+      double cost = 0;
+      vector<Arc> walk_arcs = W[i]->arcs();
+      for(Arc a_it : W[i]->arcs())
+        cost += digraph[a_it].cost;
+      cout << cost << endl;
+
+      cout << "=============================================" << endl;
+      cout << "        Exiting bellman_ford (cycle)" << endl;
+      cout << "=============================================" << endl;
+      return i;
+    }
   }
 
   cout << "=============================================" << endl;
-  cout << "          Exiting bellman_ford" << endl;
+  cout << "        Exiting bellman_ford (no cycle)" << endl;
   cout << "=============================================" << endl;
+  return -1;
 }
 
 
@@ -168,7 +186,7 @@ has_negative_cycle(Digraph& digraph)
   cout << "=============================================" << endl;
 
 
-  int n = num_vertices(digraph), width;
+  int n = num_vertices(digraph), width, cycle_i;
   Vertex u;
   vector<double> d(n, INFINITY);
   vector<Walk*> W(n, NULL);
@@ -180,8 +198,18 @@ has_negative_cycle(Digraph& digraph)
   for(tie(u_it, u_end) = vertices(digraph);
         u_it != u_end; u_it++){
     u = *u_it;
-    if (d[u] == INFINITY)
-      bellman_ford(u, d, W, digraph, n, width);
+    if (d[u] == INFINITY){
+      cycle_i = bellman_ford(u, d, W, digraph, n, width);
+      if (cycle_i >= 0){
+        cout << "Building cycle out of Walk in vertex " << cycle_i+1 << endl;
+        NegativeCycle c(*W[cycle_i]);
+        cout << "=============================================" << endl;
+        cout << "       Exiting has_negative_cycle (true)" << endl;
+        cout << "=============================================" << endl;
+
+        return {true, c, boost::none};
+      }
+    }
   }
 
   cout << "Calculated distances (Final):" << endl;
@@ -191,7 +219,7 @@ has_negative_cycle(Digraph& digraph)
   }
 
   cout << "=============================================" << endl;
-  cout << "          Exiting has_negative_cycle" << endl;
+  cout << "       Exiting has_negative_cycle (false)" << endl;
   cout << "=============================================" << endl;
 
   return {false, boost::none, FeasiblePotential(digraph, d)};
