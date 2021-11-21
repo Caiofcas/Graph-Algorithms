@@ -68,8 +68,7 @@ Digraph build_digraph(const Digraph& market)
 }
 
 // TODO need to check for neg cycles on each run
-void
-bellman_ford(
+void bellman_ford(
   Vertex s,
   vector<double> &d,
   vector<Walk*> &W,
@@ -85,13 +84,14 @@ bellman_ford(
   vector<double> old_d(n, INFINITY);
   vector<Walk*> old_W(n, NULL);
   Vertex u, v;
+  Walk aux(digraph, s);
   Arc aux_arc;
   Digraph::vertex_iterator u_it, u_end;
   Digraph::adjacency_iterator v_it, v_end; 
 
   // Set s (starting value) values
   d[s] = old_d[s] = 0;
-  // W[s] = <s>
+  W[s] = new Walk(digraph, s);
 
   // We iterate on u, not on v, due to how adjacent_vertices work
   for(l=0; l < n; l++) {
@@ -115,9 +115,16 @@ bellman_ford(
 
         if (d[v] > old_d[u] + digraph[aux_arc].cost){
           d[v] = old_d[u] + digraph[aux_arc].cost;
-          // W[v] = old_W[u] + v;
-          // TODO: walk manipulation
           cout << "Updated d[" << v+1 << "]" << endl;
+
+          if(old_W[u] == NULL)
+            W[v] = new Walk(digraph, v);
+          else
+            W[v] = new Walk(*old_W[u]);
+
+          W[v]->extend(aux_arc);
+          cout << "Updated W[" << v+1 << "]" << endl;
+          cout << "W[" << v+1 << "]: "<< W[v] << endl;
         }
         cout << "d[" << v+1 << "]: " << d[v] << endl;
       }
@@ -132,8 +139,10 @@ bellman_ford(
     }
 
     cout << "Calculated distances ("<< l <<"):" << endl;
-    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++)
+    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
       cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
+      cout << "  W[" << *u_it+1 << "]: " << W[*u_it] << endl;
+    }
 
   }
 
@@ -157,13 +166,6 @@ has_negative_cycle(Digraph& digraph)
   cout << "=============================================" << endl;
   cout << "         Entered has_negative_cycle" << endl;
   cout << "=============================================" << endl;
-  // MARCEL STARTS
-  /* const Arc& a0 = *(out_edges(0, digraph).first);
-  // const Arc& a1 = *(out_edges(1, digraph).first);
-  // Walk walk(digraph, 0);
-  // walk.extend(a0);
-  // walk.extend(a1); */
-  // MARCEL ENDS
 
 
   int n = num_vertices(digraph), width;
