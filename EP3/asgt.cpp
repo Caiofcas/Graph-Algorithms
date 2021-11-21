@@ -26,6 +26,14 @@ static size_t count_digits(size_t n)
   return std::to_string(n).size();
 }
 
+double walk_cost(Walk w, Digraph& d){
+  double cost = 0;
+  for(Arc a_it : w.arcs())
+    cost += d[a_it].cost;
+  return cost;
+}
+
+
 Digraph build_digraph(const Digraph& market)
 {
   cout << "=============================================" << endl;
@@ -95,9 +103,9 @@ int bellman_ford(
   // We iterate on u, not on v, due to how adjacent_vertices work
   for(l=1; l <= n; l++) {
     for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
-      cout << "Iterating on Path vertex " << *u_it+1 << endl;
+      cout << "- Iterating on Path vertex " << *u_it+1 << endl;
 
-      cout << "Will now iterate through vertices that are reached by ";
+      cout << "- Will now iterate through vertices that are reached by ";
       cout << *u_it+1 << endl;
 
       for(auto e_it = out_edges(*u_it, digraph);
@@ -107,14 +115,14 @@ int bellman_ford(
         aux_arc = *(e_it.first);
         u = *u_it;
         v = boost::target(aux_arc, digraph);
-        cout << "Iterating on vertex " << v+1 << endl; 
+        cout << "-- Iterating on vertex " << v+1 << endl; 
 
-        cout << "Edge (" << u+1 << ")(" << v+1 << ") has cost ";
+        cout << "-- Edge (" << u+1 << ")(" << v+1 << ") has cost ";
         cout << digraph[aux_arc].cost << endl;
 
         if (d[v] > old_d[u] + digraph[aux_arc].cost){
           d[v] = old_d[u] + digraph[aux_arc].cost;
-          cout << "Updated d[" << v+1 << "]" << endl;
+          cout << "-- Updated d[" << v+1 << "]" << endl;
 
           if(old_W[u] == NULL)
             W[v] = new Walk(digraph, u);
@@ -122,18 +130,17 @@ int bellman_ford(
             W[v] = new Walk(*old_W[u]);
 
           bool extend_suceeded = W[v]->extend(aux_arc);
-          cout << "Updated W[" << v+1 << "] " << extend_suceeded << endl;
-          cout << "W[" << v+1 << "]: "<< W[v] << endl;
+          cout << "-- Updated W[" << v+1 << "] " << extend_suceeded << endl;
+          cout << "-- W[" << v+1 << "]: "<< W[v] << endl;
+          
+          if (W[v]->is_cycle() && walk_cost(*W[v], digraph) < 0){
+            cout << "W[" << v+1 << "] is a negative cycle" << endl;
+            return v;
+          }
         }
-        cout << "d[" << v+1 << "]: " << d[v] << endl;
-      }
-    }
+        cout << "- d[" << v+1 << "]: " << d[v] << endl;
 
-    cout << "Calculated distances ("<< l <<"):" << endl;
-    for(tie(u_it, u_end) = vertices(digraph); u_it != u_end; u_it++){
-      cout << "  d[" << std::setw(width) << *u_it+1 << "]: " << d[*u_it] << endl;
-      cout << "old_d[" << std::setw(width) << *u_it+1 << "]: " << old_d[*u_it] << endl;
-      cout << "  W[" << *u_it+1 << "]: " << W[*u_it] << endl;
+      }
     }
 
     // Time step (if l == n no need to perform it, keep last iteration values around)
@@ -155,11 +162,9 @@ int bellman_ford(
   cout << "Verifying if cycle has been found" << endl;
   for(int i = 0; i < n; i++){
     if (old_d[i] != d[i]){
-      cout << "Negative cycle on vertex " << i+1 << " with cost ";
-      double cost = 0;
-      vector<Arc> walk_arcs = W[i]->arcs();
-      for(Arc a_it : W[i]->arcs())
-        cost += digraph[a_it].cost;
+      cout << "Negative cycle on vertex " << i+1 << " (" << W[i]->is_cycle();
+      cout << ") with cost ";
+      double cost = walk_cost(*W[i], digraph);
       cout << cost << endl;
 
       cout << "=============================================" << endl;
