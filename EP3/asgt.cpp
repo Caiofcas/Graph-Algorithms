@@ -158,23 +158,22 @@ Arc find_orig_arc(
   const Digraph& market
   ){
 
-  const double EPS = 1e-8;
-
+  Arc mkt_arc;
   Vertex s = boost::source(dig_arc, aux_digraph);
   Vertex t = boost::target(dig_arc, aux_digraph);
   double cand_cost, cost_ad = aux_digraph[dig_arc].cost;
+  const double EPS = 1e-8;
 
   for(auto e_it = out_edges(s, market);
       e_it.first != e_it.second; e_it.first++){
 
-    Arc mkt_arc = *e_it.first;
+    mkt_arc = *e_it.first;
     if (boost::target(mkt_arc, market) == t){
       cand_cost = -log(market[mkt_arc].cost);
-      if( abs(cost_ad - cand_cost) < EPS){
-        return mkt_arc;
-      }
+      if( abs(cost_ad - cand_cost) < EPS) break; // found arc
     }
   }
+  return mkt_arc;
 }
 
 
