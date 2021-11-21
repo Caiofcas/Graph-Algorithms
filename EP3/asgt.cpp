@@ -225,19 +225,52 @@ has_negative_cycle(Digraph& digraph)
   return {false, boost::none, FeasiblePotential(digraph, d)};
 }
 
+
+// Deal with paralallel edges, finds the one with the equivalent cost
+Arc find_orig_arc(
+  Arc dig_arc,
+  const Digraph& aux_digraph,
+  const Digraph& market
+  ){
+
+  const double EPS = 1e-8;
+
+  Vertex s = boost::source(dig_arc, aux_digraph);
+  Vertex t = boost::target(dig_arc, aux_digraph);
+  double cand_cost, cost_ad = aux_digraph[dig_arc].cost;
+
+  for(auto e_it = out_edges(s, market);
+      e_it.first != e_it.second; e_it.first++){
+
+    Arc mkt_arc = *e_it.first;
+    if (boost::target(mkt_arc, market) == t){
+      cand_cost = -log(market[mkt_arc].cost);
+      if( abs(cost_ad - cand_cost) < EPS){
+        return mkt_arc;
+      }
+    }
+  }
+}
+
+
 Loophole build_loophole(const NegativeCycle& negcycle,
                         const Digraph& aux_digraph,
                         const Digraph& market)
 {
-  /* bogus code */
-  const Arc& b0 = *(out_edges(0, market).first);
-  const Arc& b1 = *(out_edges(1, market).first);
+  cout << "=============================================" << endl;
+  cout << "        Entered build_loophole" << endl;
+  cout << "=============================================" << endl;
 
-  Walk w(market, 0);
-  w.extend(b0);
-  w.extend(b1);
+  Arc first_arc = find_orig_arc(negcycle.get()[0], aux_digraph, market);
+  Walk w(market, boost::source(first_arc, market));
 
-  // encourage RVO
+  for (auto ait : negcycle.get())
+    w.extend(find_orig_arc(ait, aux_digraph, market));
+
+  cout << "=============================================" << endl;
+  cout << "        Finished Building Loophole" << endl;
+  cout << "=============================================" << endl;
+
   return Loophole(w);
 }
 
