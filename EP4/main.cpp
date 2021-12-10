@@ -1,6 +1,15 @@
-#include <cstdlib>              // size_t, EXIT_SUCCESS, and EXIT_FAILURE
-#include <vector>
+/* This is the driver. Code similar to this will be used for grading.
+ * It may be edited by the students for testing purposes, however it
+ * WILL NOT be submitted as part of the assignment.
+ */
+
+#include <cstdlib>              // for size_t, EXIT_SUCCESS, and EXIT_FAILURE
+
+#include <exception>
 #include <iostream>
+#include <tuple>                // for std::tie and std::ignore
+#include <utility>              // for pairs
+#include <vector>
 
 #define BOOST_ALLOW_DEPRECATED_HEADERS // silence warnings
 #include <boost/graph/adjacency_list.hpp>
@@ -13,15 +22,15 @@
 
 struct BundledVertex
 {
-
+  int a;
 };
 
-struct BundledArc
-{
+struct BundledArc {
   unsigned short capacity;
   unsigned short order;
-  BundledArc() : capacity(0) {}
 };
+
+using boost::adjacency_list;
 
 typedef boost::adjacency_list<boost::vecS,
                               boost::vecS,
