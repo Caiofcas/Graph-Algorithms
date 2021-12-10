@@ -33,6 +33,7 @@
 
 # boost
 boost*.tar.gz
+boost*
 
 .vscode
 
