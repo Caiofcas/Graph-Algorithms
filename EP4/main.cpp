@@ -56,7 +56,7 @@ struct ResDigraphBundledArc
 {
   short direction = FORWARD;
   unsigned short res_capacity = 0;
-  Arc paired_arc = nullptr;
+  Arc paired_arc;
 };
 
 typedef boost::adjacency_list<
@@ -122,6 +122,7 @@ void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
   int forward_cap, backward_cap;
   for (Arc a : ordering)
   {
+    //TODO: check if paired arc exists
     if (d_hat[a].direction == FORWARD)
     {
       forward_cap = d_hat[a].res_capacity;
@@ -154,6 +155,7 @@ ResDigraph build_res_digraph(Digraph &d)
       tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
       rd[a_f].direction = FORWARD;
       rd[a_f].res_capacity = res_capacity;
+      rd[a_f].paired_arc = a_f;
       i++;
     }
     if (d[*a_it].flow > 0)
@@ -161,6 +163,7 @@ ResDigraph build_res_digraph(Digraph &d)
       tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
       rd[a_b].direction = BACKWARD;
       rd[a_b].res_capacity = d[*a_it].flow;
+      rd[a_b].paired_arc = a_b;
       i++;
     }
     if (i == 2)
@@ -182,6 +185,21 @@ ResDigraph build_res_digraph(Digraph &d)
   ========================================================*/
 
 void edmonds_karp(FlowProblem &fp){
+
+  int t = 0;
+  // flow f_base = 0;
+  while(true){
+    // 1. Compute residual digraph of D, d_hat
+    // 2. Build Set S of vertices reached by source
+    // 3. if sink in S
+    //  then
+    //  3.1 Build shortest source-sink path P
+    //  3.2 Get eps = min(res_c(arc) for arc in P) 
+    //  3.3 f_base += eps * path_flow
+    //  else
+    //  3.1 Return (S, f_base)
+    t++;
+  }
 
 };
 
