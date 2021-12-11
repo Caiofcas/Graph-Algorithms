@@ -15,6 +15,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 
+using std::tie;
+
 /*========================================================
   ================ DIGRAPH DEFINITIONS ===================
   ========================================================*/
@@ -22,34 +24,57 @@
 #define FORWARD 1
 #define BACKWARD -1
 
-struct BundledVertex
+// Regular Digraph
+
+struct DigraphBundledVertex
 {
 };
 
-struct BundledArc
+struct DigraphBundledArc
 {
-  short direction = FORWARD;
-  unsigned short capacity, res_capacity, flow = 0;
-  BundledArc *paired_arc = nullptr;
+  unsigned short capacity, flow = 0;
 };
 
 typedef boost::adjacency_list<
     boost::vecS,
     boost::vecS,
     boost::directedS,
-    BundledVertex,
-    BundledArc>
+    DigraphBundledVertex,
+    DigraphBundledArc>
     Digraph;
 
 typedef boost::graph_traits<Digraph>::vertex_descriptor Vertex;
 typedef boost::graph_traits<Digraph>::edge_descriptor Arc;
+
+// Residual Digraph
+
+struct ResDigraphBundledVertex
+{
+};
+
+struct ResDigraphBundledArc
+{
+  short direction = FORWARD;
+  unsigned short res_capacity = 0;
+  Arc paired_arc = nullptr;
+};
+
+typedef boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::directedS,
+    ResDigraphBundledVertex,
+    ResDigraphBundledArc>
+    ResDigraph;
+
+// Problem
 
 struct FlowProblem
 {
   Digraph d;
   Vertex source;
   Vertex sink;
-  std::vector<Arc> original_order;
+  std::vector<Arc> arc_order;
 };
 
 /*========================================================
@@ -82,7 +107,7 @@ FlowProblem read_flow(std::istream &is)
     Arc a;
     std::tie(a, std::ignore) = boost::add_edge(--u, --v, dig);
     is >> dig[a].capacity;
-    fd.original_order.push_back(a);
+    fd.arc_order.push_back(a);
   }
 
   fd.d = dig;
@@ -92,21 +117,61 @@ FlowProblem read_flow(std::istream &is)
   return fd;
 }
 
-void print_res_capacity(Digraph &d_hat, std::vector<Arc>& ordering)
+void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
 {
   int forward_cap, backward_cap;
-  for (Arc a : ordering){
-    if (d_hat[a].direction == FORWARD){
+  for (Arc a : ordering)
+  {
+    if (d_hat[a].direction == FORWARD)
+    {
       forward_cap = d_hat[a].res_capacity;
-      backward_cap = (*d_hat[a].paired_arc).res_capacity;
-    } else {
-      forward_cap = (*d_hat[a].paired_arc).res_capacity;
+      backward_cap = d_hat[d_hat[a].paired_arc].res_capacity;
+    }
+    else
+    {
+      forward_cap = d_hat[d_hat[a].paired_arc].res_capacity;
       backward_cap = d_hat[a].res_capacity;
     }
     std::cout << forward_cap << " " << backward_cap << std::endl;
   }
-
 };
+
+// TODO: preserve ordering
+ResDigraph build_res_digraph(Digraph &d)
+{
+  ResDigraph rd;
+  Digraph::edge_iterator a_it, a_end;
+
+  for (tie(a_it, a_end) = boost::edges(d); a_it != a_end; a_it++)
+  {
+    short i = 0; // keep track of edges added
+    int res_capacity = d[*a_it].capacity - d[*a_it].flow;
+    Arc a_f, a_b;
+    Vertex u = (*a_it).m_source, v = (*a_it).m_target;
+
+    if (res_capacity > 0)
+    {
+      tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
+      rd[a_f].direction = FORWARD;
+      rd[a_f].res_capacity = res_capacity;
+      i++;
+    }
+    if (d[*a_it].flow > 0)
+    {
+      tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
+      rd[a_b].direction = BACKWARD;
+      rd[a_b].res_capacity = d[*a_it].flow;
+      i++;
+    }
+    if (i == 2)
+    {
+      rd[a_b].paired_arc = a_f;
+      rd[a_f].paired_arc = a_b;
+    }
+  }
+
+  return rd;
+}
 
 /*========================================================
   ================ END DIGRAPH UTILS =====================
@@ -116,7 +181,7 @@ void print_res_capacity(Digraph &d_hat, std::vector<Arc>& ordering)
   =================== Edmonds-Karp =======================
   ========================================================*/
 
-void edmonds_karp(FlowProblem& fp){
+void edmonds_karp(FlowProblem &fp){
 
 };
 
@@ -124,11 +189,10 @@ void edmonds_karp(FlowProblem& fp){
   ================ END DIGRAPH UTILS =====================
   ========================================================*/
 
-
 int main(int argc, char **argv)
 {
   FlowProblem flow_problem{read_flow(std::cin)};
-  
+
   // is this by copy?
   edmonds_karp(flow_problem);
 
