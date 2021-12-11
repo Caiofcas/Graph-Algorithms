@@ -96,7 +96,7 @@ void print_res_capacity(Digraph &d_hat, std::vector<Arc>& ordering)
 {
   int forward_cap, backward_cap;
   for (Arc a : ordering){
-    if (d_hat[a].ordering == FORWARD){
+    if (d_hat[a].direction == FORWARD){
       forward_cap = d_hat[a].res_capacity;
       backward_cap = (*d_hat[a].paired_arc).res_capacity;
     } else {
@@ -112,9 +112,25 @@ void print_res_capacity(Digraph &d_hat, std::vector<Arc>& ordering)
   ================ END DIGRAPH UTILS =====================
   ========================================================*/
 
+/*========================================================
+  =================== Edmonds-Karp =======================
+  ========================================================*/
+
+void edmonds_karp(FlowProblem& fp){
+
+};
+
+/*========================================================
+  ================ END DIGRAPH UTILS =====================
+  ========================================================*/
+
+
 int main(int argc, char **argv)
 {
   FlowProblem flow_problem{read_flow(std::cin)};
+  
+  // is this by copy?
+  edmonds_karp(flow_problem);
 
   return EXIT_SUCCESS;
 }
