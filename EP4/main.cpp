@@ -14,6 +14,7 @@
 #define BOOST_ALLOW_DEPRECATED_HEADERS // silence warnings
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
+#include <boost/optional.hpp>
 
 using std::tie;
 
@@ -82,6 +83,73 @@ struct FlowProblem
   ========================================================*/
 
 /*========================================================
+  ================= PATH DEFINITIONS =====================
+  ========================================================*/
+
+/* Path through Residual Digraph */
+class Path
+{
+public:
+  /* start building a walk in digraph from vertex start */
+  Path(const ResDigraph &digraph, const Vertex &start);
+
+  /* extend the walk by adding arc to its end */
+  bool extend(const Arc &arc);
+
+  /* Check before adding vertex */
+  bool already_seen(const Vertex v);
+
+  /* accessors */
+  const ResDigraph &digraph() const { return _digraph.get(); }
+  const std::vector<Arc> &arcs() const { return _arcs; }
+
+  friend std::ostream &operator<<(std::ostream &os, const Path &path);
+
+private:
+  std::reference_wrapper<const ResDigraph> _digraph;
+  const Vertex _start;
+  Vertex _last;
+  std::vector<Arc> _arcs;
+  std::vector<bool> _visited;
+};
+
+/* Walk constructor */
+Path::Path(const ResDigraph &digraph, const Vertex &start)
+    : _digraph(std::cref(digraph)),
+      _start(start),
+      _last(start),
+      _visited(std::vector<bool>(boost::num_vertices(digraph), false))
+{
+  _visited[start] = true;
+}
+
+bool Path::extend(const Arc &arc)
+{
+  Vertex u = boost::source(arc, digraph());
+  if (u != _last)
+  {
+    return false;
+  }
+  Vertex v = boost::target(arc, digraph());
+  if (_visited[v])
+    return false;
+
+  _arcs.push_back(arc);
+  _visited[v] = true;
+  _last = v;
+  return true;
+}
+
+bool Path::already_seen(const Vertex v)
+{
+  return _visited[v];
+}
+
+/*========================================================
+  ================ END PATH DEFINITIONS ==================
+  ========================================================*/
+
+/*========================================================
   ================ DIGRAPH UTILS =========================
   ========================================================*/
 
@@ -137,6 +205,14 @@ void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
   }
 };
 
+std::tuple<
+    bool,
+    boost::optional<Path>>
+    //boost::optional<ArcSet> : reachable arcs
+find_min_path(ResDigraph &d_hat, Vertex start){
+
+};
+
 // TODO: preserve ordering
 ResDigraph build_res_digraph(Digraph &d)
 {
@@ -184,23 +260,28 @@ ResDigraph build_res_digraph(Digraph &d)
   =================== Edmonds-Karp =======================
   ========================================================*/
 
-void edmonds_karp(FlowProblem &fp){
+void edmonds_karp(FlowProblem &fp)
+{
 
   int t = 0;
-  // flow f_base = 0;
-  while(true){
+  while (true)
+  {
     // 1. Compute residual digraph of D, d_hat
-    // 2. Build Set S of vertices reached by source
-    // 3. if sink in S
-    //  then
-    //  3.1 Build shortest source-sink path P
-    //  3.2 Get eps = min(res_c(arc) for arc in P) 
-    //  3.3 f_base += eps * path_flow
-    //  else
-    //  3.1 Return (S, f_base)
+    ResDigraph d_hat = build_res_digraph(fp.d);
+
+    bool reaches_sink;
+    auto ret = find_min_path(d_hat, fp.source);
+    if (std::get<bool>(ret)){
+      Path p = std::get<Path>(ret); 
+      // source-sink path exists
+      //  3.2 Get eps = min(res_c(arc) for arc in P)
+      //  3.3 f_base += eps * path_flow
+    } else {
+      // 2. Build Set S of vertices reached by source
+      //  3.1 Return (S, f_base)
+    }
     t++;
   }
-
 };
 
 /*========================================================
