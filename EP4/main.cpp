@@ -120,6 +120,48 @@ FlowProblem read_flow(std::istream &is)
   return fd;
 }
 
+// TODO: preserve ordering
+ResDigraph build_res_digraph(Digraph &d)
+{
+  ResDigraph rd;
+  Digraph::edge_iterator a_it, a_end;
+
+  for (tie(a_it, a_end) = boost::edges(d); a_it != a_end; a_it++)
+  {
+    short i = 0; // keep track of edges added
+    int res_capacity = d[*a_it].capacity - d[*a_it].flow;
+    Arc a_f, a_b;
+    Vertex u = (*a_it).m_source, v = (*a_it).m_target;
+
+    if (res_capacity > 0)
+    {
+      tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
+      rd[a_f].direction = FORWARD;
+      rd[a_f].orig_arc = *a_it;
+      rd[a_f].res_capacity = res_capacity;
+      rd[a_f].paired_arc = a_f;
+      i++;
+    }
+    if (d[*a_it].flow > 0)
+    {
+      tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
+      rd[a_b].direction = BACKWARD;
+      rd[a_b].orig_arc = *a_it;
+      rd[a_b].res_capacity = d[*a_it].flow;
+      rd[a_b].paired_arc = a_b;
+      i++;
+    }
+    if (i == 2)
+    {
+      rd[a_b].paired_arc = a_f;
+      rd[a_f].paired_arc = a_b;
+    }
+  }
+
+  return rd;
+}
+
+
 void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
 {
   int forward_cap, backward_cap;
@@ -212,47 +254,6 @@ find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
     return {false, boost::none, S};
   }
 };
-
-// TODO: preserve ordering
-ResDigraph build_res_digraph(Digraph &d)
-{
-  ResDigraph rd;
-  Digraph::edge_iterator a_it, a_end;
-
-  for (tie(a_it, a_end) = boost::edges(d); a_it != a_end; a_it++)
-  {
-    short i = 0; // keep track of edges added
-    int res_capacity = d[*a_it].capacity - d[*a_it].flow;
-    Arc a_f, a_b;
-    Vertex u = (*a_it).m_source, v = (*a_it).m_target;
-
-    if (res_capacity > 0)
-    {
-      tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
-      rd[a_f].direction = FORWARD;
-      rd[a_f].orig_arc = *a_it;
-      rd[a_f].res_capacity = res_capacity;
-      rd[a_f].paired_arc = a_f;
-      i++;
-    }
-    if (d[*a_it].flow > 0)
-    {
-      tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
-      rd[a_b].direction = BACKWARD;
-      rd[a_b].orig_arc = *a_it;
-      rd[a_b].res_capacity = d[*a_it].flow;
-      rd[a_b].paired_arc = a_b;
-      i++;
-    }
-    if (i == 2)
-    {
-      rd[a_b].paired_arc = a_f;
-      rd[a_f].paired_arc = a_b;
-    }
-  }
-
-  return rd;
-}
 
 /*========================================================
   ================ END DIGRAPH UTILS =====================
