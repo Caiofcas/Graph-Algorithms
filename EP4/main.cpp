@@ -10,6 +10,7 @@
 #include <tuple>   // for std::tie and std::ignore
 #include <utility> // for pairs
 #include <vector>
+#include <queue>
 
 #define BOOST_ALLOW_DEPRECATED_HEADERS // silence warnings
 #include <boost/graph/adjacency_list.hpp>
@@ -84,73 +85,6 @@ struct FlowProblem
   ========================================================*/
 
 /*========================================================
-  ================= PATH DEFINITIONS =====================
-  ========================================================*/
-
-/* Path through Residual Digraph */
-class Path
-{
-public:
-  /* start building a walk in digraph from vertex start */
-  Path(const ResDigraph &digraph, const Vertex &start);
-
-  /* extend the walk by adding arc to its end */
-  bool extend(const Arc &arc);
-
-  /* Check before adding vertex */
-  bool already_seen(const Vertex v);
-
-  /* accessors */
-  const ResDigraph &digraph() const { return _digraph.get(); }
-  const std::vector<Arc> &arcs() const { return _arcs; }
-
-  friend std::ostream &operator<<(std::ostream &os, const Path &path);
-
-private:
-  std::reference_wrapper<const ResDigraph> _digraph;
-  const Vertex _start;
-  Vertex _last;
-  std::vector<Arc> _arcs;
-  std::vector<bool> _visited;
-};
-
-/* Walk constructor */
-Path::Path(const ResDigraph &digraph, const Vertex &start)
-    : _digraph(std::cref(digraph)),
-      _start(start),
-      _last(start),
-      _visited(std::vector<bool>(boost::num_vertices(digraph), false))
-{
-  _visited[start] = true;
-}
-
-bool Path::extend(const Arc &arc)
-{
-  Vertex u = boost::source(arc, digraph());
-  if (u != _last)
-  {
-    return false;
-  }
-  Vertex v = boost::target(arc, digraph());
-  if (_visited[v])
-    return false;
-
-  _arcs.push_back(arc);
-  _visited[v] = true;
-  _last = v;
-  return true;
-}
-
-bool Path::already_seen(const Vertex v)
-{
-  return _visited[v];
-}
-
-/*========================================================
-  ================ END PATH DEFINITIONS ==================
-  ========================================================*/
-
-/*========================================================
   ================ DIGRAPH UTILS =========================
   ========================================================*/
 
@@ -206,14 +140,77 @@ void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
   }
 };
 
-
-// TODO: Path class may be useless, return vectors of arcs in both
+// Returns:
+//  - (true, Arcs representing path from start to target, none)
+//  - (false, none, Vertices reachable from start)
 std::tuple<
     bool,
-    boost::optional<Path>>
-    //boost::optional<ArcSet> : reachable arcs
-find_min_path(ResDigraph &d_hat, Vertex start){
+    boost::optional<std::vector<Arc>>,
+    boost::optional<std::vector<Vertex>>>
+find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
+{
 
+  // BFS
+
+  std::vector<bool> reached(boost::num_vertices(d_hat), false);
+  std::vector<Arc> reached_by(boost::num_vertices(d_hat));
+  std::queue<Vertex> q;
+  bool found = false;
+
+  q.push(start);
+  reached[start] = true;
+
+  while (!q.empty() && !found)
+  {
+    // get next element
+    Vertex v = q.front();
+    q.pop();
+
+    ResDigraph::edge_iterator a_it, a_end;
+
+    // get adjacent vertices
+    for (tie(a_it, a_end) = boost::out_edges(v, d_hat);
+         a_it != a_end; a_it++)
+    {
+      Vertex u = boost::target(*a_it, d_hat);
+      q.push(u);
+      if (!reached[u])
+      {
+        reached[u] = true;
+        reached_by[u] = *a_it;
+        if (u == target)
+        {
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (found)
+  {
+    std::vector<Arc> path;
+    Vertex u = target;
+    while (u != start)
+    {
+      path.push_back(reached_by[u]);
+      u = boost::source(reached_by[u], d_hat);
+    }
+    return {true, path, boost::none};
+  }
+  else
+  {
+    std::vector<Vertex> S;
+    ResDigraph::vertex_iterator v_it, v_end;
+    for (tie(v_it, v_end) = boost::vertices(d_hat);
+         v_it != v_end; v_it++)
+    {
+      if (reached[*v_it])
+        S.push_back(*v_it);
+    }
+
+    return {false, boost::none, S};
+  }
 };
 
 // TODO: preserve ordering
@@ -267,6 +264,7 @@ ResDigraph build_res_digraph(Digraph &d)
 
 void edmonds_karp(FlowProblem &fp)
 {
+  // TODO: build augmented digraph first, pass that to build_res_digraph
 
   int t = 0;
   while (true)
@@ -275,29 +273,54 @@ void edmonds_karp(FlowProblem &fp)
     ResDigraph d_hat = build_res_digraph(fp.d);
 
     bool reaches_sink;
-    auto ret = find_min_path(d_hat, fp.source);
-    if (std::get<bool>(ret)){
-      // source-sink path exists
-      Path p = std::get<Path>(ret); 
+    auto ret = find_min_path(d_hat, fp.source, fp.sink);
+    if (std::get<bool>(ret)) // source-sink path exists
+    {
+      auto p = std::get<std::vector<Arc>>(ret);
 
       //  3.2 Get eps = min(res_c(arc) for arc in P)
       int eps = INFINITY;
-      for (auto a : p.arcs()){
-        if (d_hat[a].res_capacity < eps){
+      for (auto a : p)
+      {
+        if (d_hat[a].res_capacity < eps)
+        {
           eps = d_hat[a].res_capacity;
         }
       }
 
       //  3.3 f_base += eps * path_flow
-      for (auto a : p.arcs()){
-       if (d_hat[a].direction == FORWARD)
-        fp.d[d_hat[a].orig_arc].flow += eps;
-       else
-        fp.d[d_hat[a].orig_arc].flow -= eps;
+      for (auto a : p)
+      {
+        if (d_hat[a].direction == FORWARD)
+          fp.d[d_hat[a].orig_arc].flow += eps;
+        else
+          fp.d[d_hat[a].orig_arc].flow -= eps;
       }
-    } else {
-      // 2. Build Set S of vertices reached by source
-      //  3.1 Return (S, f_base)
+
+      // TODO: print res_digraph
+    }
+    else
+    {
+      auto S = std::get<std::vector<Vertex>>(ret);
+
+      std::cout << 1 << " ";
+      int val_f = 0;
+
+      Digraph::edge_iterator e_it, e_end;
+      // TODO: how to get val_f? keep list of arcs that reach sink, 
+      // probably warrants a sepparate function
+      // for (tie(e_it, e_end) = boost::in_edges(fp.sink, fp.d);
+      //      e_it != e_end; e_it++)
+      // {
+      // }
+
+      std::cout << val_f << " " << S.size();
+      for (auto v: S)
+        std::cout << " " << v+1;
+      
+      std::cout << std::endl;
+      return; 
+
     }
     t++;
   }
@@ -311,7 +334,6 @@ int main(int argc, char **argv)
 {
   FlowProblem flow_problem{read_flow(std::cin)};
 
-  // is this by copy?
   edmonds_karp(flow_problem);
 
   return EXIT_SUCCESS;
