@@ -272,14 +272,17 @@ void edmonds_karp(FlowProblem &fp)
     // 1. Compute residual digraph of D, d_hat
     ResDigraph d_hat = build_res_digraph(fp.d);
 
-    bool reaches_sink;
-    auto ret = find_min_path(d_hat, fp.source, fp.sink);
+    std::tuple<
+        bool,
+        boost::optional<std::vector<Arc>>,
+        boost::optional<std::vector<Vertex>>>
+        ret = find_min_path(d_hat, fp.source, fp.sink);
     if (std::get<bool>(ret)) // source-sink path exists
     {
-      auto p = std::get<std::vector<Arc>>(ret);
-
+      auto p_ret = std::get<1>(ret);
+      std::vector<Arc> p = p_ret.value();
       //  3.2 Get eps = min(res_c(arc) for arc in P)
-      int eps = INFINITY;
+      int eps = INT_MAX;
       for (auto a : p)
       {
         if (d_hat[a].res_capacity < eps)
@@ -301,13 +304,14 @@ void edmonds_karp(FlowProblem &fp)
     }
     else
     {
-      auto S = std::get<std::vector<Vertex>>(ret);
+      auto s_ret = std::get<2>(ret);
+      std::vector<Vertex> S = s_ret.value();
 
       std::cout << 1 << " ";
       int val_f = 0;
 
       Digraph::edge_iterator e_it, e_end;
-      // TODO: how to get val_f? keep list of arcs that reach sink, 
+      // TODO: how to get val_f? keep list of arcs that reach sink,
       // probably warrants a sepparate function
       // for (tie(e_it, e_end) = boost::in_edges(fp.sink, fp.d);
       //      e_it != e_end; e_it++)
@@ -315,12 +319,11 @@ void edmonds_karp(FlowProblem &fp)
       // }
 
       std::cout << val_f << " " << S.size();
-      for (auto v: S)
-        std::cout << " " << v+1;
-      
-      std::cout << std::endl;
-      return; 
+      for (auto v : S)
+        std::cout << " " << v + 1;
 
+      std::cout << std::endl;
+      return;
     }
     t++;
   }
