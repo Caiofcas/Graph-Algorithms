@@ -16,6 +16,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/optional.hpp>
+#include <boost/graph/copy.hpp>
 
 using std::tie;
 
@@ -116,16 +117,28 @@ FlowProblem read_flow(std::istream &is)
 }
 
 
-// Digraph build_res_digraph(Digraph d, Digraph ad, std::vector<Arc>* ordering){
+Digraph build_res_digraph(Digraph& d, Digraph& ad, std::vector<Arc>* ordering){
   
-//   Digraph rd;
+  Digraph rd;
 
-//   Digraph::edge_iterator e_it, e_end;
-//   for (tie(e_it, e_end) = boost::edges(ad); e_it!=e_end; e_it++){
-//     boost::add_edge()
-//   }
+  boost::copy_graph(ad, rd);
+  Digraph::edge_iterator e_it, e_end;
+  for (tie(e_it, e_end) = boost::edges(rd); e_it!=e_end; e_it++){
+    Arc orig_arc = ordering->at(rd[*e_it].orig_arc_idx);
+    int res_capacity = 0;
+    if (rd[*e_it].direction == FORWARD)
+      res_capacity = d[orig_arc].capacity - d[orig_arc].flow;
+    else
+      res_capacity = d[orig_arc].flow;
 
-// }
+    if (res_capacity < 0)
+      boost::remove_edge(*e_it, rd);
+    else
+      rd[*e_it].res_capacity = res_capacity;
+  }
+
+  return rd;
+}
 /*========================================================
   ================ END DIGRAPH UTILS =====================
   ========================================================*/
@@ -208,16 +221,17 @@ FlowProblem read_flow(std::istream &is)
 // };
 
 
-// void edmonds_karp(FlowProblem &fp)
-// {
-//   // TODO: build augmented digraph first, pass that to build_res_digraph
+void edmonds_karp(FlowProblem &fp)
+{
+  // TODO: build augmented digraph first, pass that to build_res_digraph
 
-//   int t = 0;
-//   while (true)
-//   {
-//     // 1. Compute residual digraph of D, d_hat
-//     // Digraph d_hat = build_res_digraph(fp.a_d);
+  int t = 0;
+  while (true)
+  {
+    // 1. Compute residual digraph of D, d_hat
+    Digraph d_f = build_res_digraph(fp.d, fp.a_d, &fp.arc_order);
 
+    print_res_digraph(d_f);
 //     std::tuple<
 //         bool,
 //         boost::optional<std::vector<Arc>>,
@@ -272,8 +286,8 @@ FlowProblem read_flow(std::istream &is)
 //       return;
 //     }
 //     t++;
-//   }
-// };
+  }
+};
 
 /*========================================================
   ================ END DIGRAPH UTILS =====================
