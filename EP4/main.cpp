@@ -206,6 +206,8 @@ void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
   }
 };
 
+
+// TODO: Path class may be useless, return vectors of arcs in both
 std::tuple<
     bool,
     boost::optional<Path>>
@@ -275,11 +277,11 @@ void edmonds_karp(FlowProblem &fp)
     bool reaches_sink;
     auto ret = find_min_path(d_hat, fp.source);
     if (std::get<bool>(ret)){
-      Path p = std::get<Path>(ret); 
       // source-sink path exists
-      int eps = INFINITY;
+      Path p = std::get<Path>(ret); 
 
       //  3.2 Get eps = min(res_c(arc) for arc in P)
+      int eps = INFINITY;
       for (auto a : p.arcs()){
         if (d_hat[a].res_capacity < eps){
           eps = d_hat[a].res_capacity;
