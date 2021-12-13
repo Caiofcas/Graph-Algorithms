@@ -26,6 +26,29 @@ using std::tie;
 #define FORWARD 1
 #define BACKWARD -1
 
+// Augmented Digraph
+
+struct AugDigraphBundledVertex
+{
+};
+
+struct AugDigraphBundledArc
+{
+  short direction = FORWARD;
+  unsigned short res_capacity = 0;
+  int orig_arc_idx;
+};
+
+typedef boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::directedS,
+    AugDigraphBundledVertex,
+    AugDigraphBundledArc>
+    AugDigraph;
+
+typedef boost::graph_traits<AugDigraph>::edge_descriptor AugArc;
+
 // Regular Digraph
 
 struct DigraphBundledVertex
@@ -35,6 +58,7 @@ struct DigraphBundledVertex
 struct DigraphBundledArc
 {
   unsigned short capacity, flow = 0;
+  AugArc *f_arc = nullptr, *b_arc = nullptr;
 };
 
 typedef boost::adjacency_list<
@@ -47,28 +71,6 @@ typedef boost::adjacency_list<
 
 typedef boost::graph_traits<Digraph>::vertex_descriptor Vertex;
 typedef boost::graph_traits<Digraph>::edge_descriptor Arc;
-
-// Residual Digraph
-
-struct ResDigraphBundledVertex
-{
-};
-
-struct ResDigraphBundledArc
-{
-  short direction = FORWARD;
-  unsigned short res_capacity = 0;
-  Arc paired_arc;
-  Arc orig_arc;
-};
-
-typedef boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::directedS,
-    ResDigraphBundledVertex,
-    ResDigraphBundledArc>
-    ResDigraph;
 
 // Problem
 
@@ -121,9 +123,9 @@ FlowProblem read_flow(std::istream &is)
 }
 
 // TODO: preserve ordering
-ResDigraph build_res_digraph(Digraph &d)
+AugDigraph build_res_digraph(Digraph &d)
 {
-  ResDigraph rd;
+  AugDigraph rd;
   Digraph::edge_iterator a_it, a_end;
 
   for (tie(a_it, a_end) = boost::edges(d); a_it != a_end; a_it++)
@@ -137,50 +139,28 @@ ResDigraph build_res_digraph(Digraph &d)
     {
       tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
       rd[a_f].direction = FORWARD;
-      rd[a_f].orig_arc = *a_it;
       rd[a_f].res_capacity = res_capacity;
-      rd[a_f].paired_arc = a_f;
       i++;
     }
     if (d[*a_it].flow > 0)
     {
       tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
       rd[a_b].direction = BACKWARD;
-      rd[a_b].orig_arc = *a_it;
       rd[a_b].res_capacity = d[*a_it].flow;
-      rd[a_b].paired_arc = a_b;
       i++;
-    }
-    if (i == 2)
-    {
-      rd[a_b].paired_arc = a_f;
-      rd[a_f].paired_arc = a_b;
     }
   }
 
   return rd;
 }
 
+/*========================================================
+  ================ END DIGRAPH UTILS =====================
+  ========================================================*/
 
-void print_res_capacity(ResDigraph &d_hat, std::vector<Arc> &ordering)
-{
-  int forward_cap, backward_cap;
-  for (Arc a : ordering)
-  {
-    //TODO: check if paired arc exists
-    if (d_hat[a].direction == FORWARD)
-    {
-      forward_cap = d_hat[a].res_capacity;
-      backward_cap = d_hat[d_hat[a].paired_arc].res_capacity;
-    }
-    else
-    {
-      forward_cap = d_hat[d_hat[a].paired_arc].res_capacity;
-      backward_cap = d_hat[a].res_capacity;
-    }
-    std::cout << forward_cap << " " << backward_cap << std::endl;
-  }
-};
+/*========================================================
+  =================== Edmonds-Karp =======================
+  ========================================================*/
 
 // Returns:
 //  - (true, Arcs representing path from start to target, none)
@@ -189,7 +169,7 @@ std::tuple<
     bool,
     boost::optional<std::vector<Arc>>,
     boost::optional<std::vector<Vertex>>>
-find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
+find_min_path(AugDigraph &d_hat, Vertex start, Vertex target)
 {
 
   // BFS
@@ -208,7 +188,7 @@ find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
     Vertex v = q.front();
     q.pop();
 
-    ResDigraph::edge_iterator a_it, a_end;
+    AugDigraph::edge_iterator a_it, a_end;
 
     // get adjacent vertices
     for (tie(a_it, a_end) = boost::out_edges(v, d_hat);
@@ -243,7 +223,7 @@ find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
   else
   {
     std::vector<Vertex> S;
-    ResDigraph::vertex_iterator v_it, v_end;
+    AugDigraph::vertex_iterator v_it, v_end;
     for (tie(v_it, v_end) = boost::vertices(d_hat);
          v_it != v_end; v_it++)
     {
@@ -255,13 +235,6 @@ find_min_path(ResDigraph &d_hat, Vertex start, Vertex target)
   }
 };
 
-/*========================================================
-  ================ END DIGRAPH UTILS =====================
-  ========================================================*/
-
-/*========================================================
-  =================== Edmonds-Karp =======================
-  ========================================================*/
 
 void edmonds_karp(FlowProblem &fp)
 {
@@ -271,7 +244,7 @@ void edmonds_karp(FlowProblem &fp)
   while (true)
   {
     // 1. Compute residual digraph of D, d_hat
-    ResDigraph d_hat = build_res_digraph(fp.d);
+    AugDigraph d_hat = build_res_digraph(fp.d);
 
     std::tuple<
         bool,
@@ -293,13 +266,13 @@ void edmonds_karp(FlowProblem &fp)
       }
 
       //  3.3 f_base += eps * path_flow
-      for (auto a : p)
-      {
-        if (d_hat[a].direction == FORWARD)
-          fp.d[d_hat[a].orig_arc].flow += eps;
-        else
-          fp.d[d_hat[a].orig_arc].flow -= eps;
-      }
+      // for (auto a : p)
+      // {
+      //   if (d_hat[a].direction == FORWARD)
+      //     fp.d[d_hat[a].orig_arc].flow += eps;
+      //   else
+      //     fp.d[d_hat[a].orig_arc].flow -= eps;
+      // }
 
       // TODO: print res_digraph
     }
