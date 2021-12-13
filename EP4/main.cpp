@@ -77,6 +77,7 @@ typedef boost::graph_traits<Digraph>::edge_descriptor Arc;
 struct FlowProblem
 {
   Digraph d;
+  AugDigraph a_d;
   Vertex source;
   Vertex sink;
   std::vector<Arc> arc_order;
@@ -97,6 +98,7 @@ FlowProblem read_flow(std::istream &is)
 
   FlowProblem fd;
   Digraph dig(n);
+  AugDigraph aug_dig(n);
   Vertex source, sink;
 
   size_t m, i;
@@ -110,48 +112,26 @@ FlowProblem read_flow(std::istream &is)
     int u, v;
     is >> u >> v;
     Arc a;
-    std::tie(a, std::ignore) = boost::add_edge(--u, --v, dig);
+    AugArc a_f, a_b;
+    std::tie(a, std::ignore) = boost::add_edge(u-1, v-1, dig);
+    std::tie(a_f, std::ignore) = boost::add_edge(u-1, v-1, aug_dig);
+    std::tie(a_b, std::ignore) = boost::add_edge(v-1, u-1, aug_dig);
+
     is >> dig[a].capacity;
+
+    aug_dig[a_f].direction = FORWARD;
+    aug_dig[a_b].direction = BACKWARD;
+    aug_dig[a_f].orig_arc_idx = aug_dig[a_b].orig_arc_idx = i;
     fd.arc_order.push_back(a);
+    i++;
   }
 
+  fd.a_d = aug_dig;
   fd.d = dig;
   fd.source = source;
   fd.sink = sink;
 
   return fd;
-}
-
-// TODO: preserve ordering
-AugDigraph build_res_digraph(Digraph &d)
-{
-  AugDigraph rd;
-  Digraph::edge_iterator a_it, a_end;
-
-  for (tie(a_it, a_end) = boost::edges(d); a_it != a_end; a_it++)
-  {
-    short i = 0; // keep track of edges added
-    int res_capacity = d[*a_it].capacity - d[*a_it].flow;
-    Arc a_f, a_b;
-    Vertex u = (*a_it).m_source, v = (*a_it).m_target;
-
-    if (res_capacity > 0)
-    {
-      tie(a_f, std::ignore) = boost::add_edge(u, v, rd);
-      rd[a_f].direction = FORWARD;
-      rd[a_f].res_capacity = res_capacity;
-      i++;
-    }
-    if (d[*a_it].flow > 0)
-    {
-      tie(a_b, std::ignore) = boost::add_edge(v, u, rd);
-      rd[a_b].direction = BACKWARD;
-      rd[a_b].res_capacity = d[*a_it].flow;
-      i++;
-    }
-  }
-
-  return rd;
 }
 
 /*========================================================
@@ -244,7 +224,7 @@ void edmonds_karp(FlowProblem &fp)
   while (true)
   {
     // 1. Compute residual digraph of D, d_hat
-    AugDigraph d_hat = build_res_digraph(fp.d);
+    // AugDigraph d_hat = build_res_digraph(fp.a_d);
 
     std::tuple<
         bool,
