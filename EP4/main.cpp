@@ -180,18 +180,28 @@ void build_res_digraph(
   std::cout << "entra build_res_digraph" << std::endl;
   std::cout << "=========================================" << std::endl;
 
-  // boost::copy_graph(ad, rd);
+  *rd = Digraph(boost::num_vertices(*ad));
 
-  // boost::remove_edge_if(
-  //   [](Arc a) -> bool { return boost::get<3>(a) == 0;},
-  //   *rd
-  // );
-  // Digraph::edge_iterator e_it, e_end;
-  // for (tie(e_it, e_end) = boost::edges(*rd); e_it != e_end; e_it++)
-  // {
-  //   if ((*rd)[*e_it].res_capacity == 0)
-  //     boost::remove_edge(*e_it, *rd);
-  // }
+  Digraph::edge_iterator e_it, e_end;
+  for (tie(e_it, e_end) = boost::edges(*ad); e_it != e_end; e_it++)
+  {
+    Arc a = *e_it;
+    if ((*ad)[a].res_capacity != 0){
+      boost::add_edge(
+        boost::source(a, *ad),
+        boost::target(a, *ad),
+        {
+          (*ad)[a].capacity,
+          (*ad)[a].flow,
+          (*ad)[a].direction,
+          (*ad)[a].res_capacity,
+          (*ad)[a].orig_arc_idx,
+          (*ad)[a].back_arc_idx,
+          (*ad)[a].fwd_arc_idx,
+        },
+        *rd);
+    }
+  }
 
   std::cout << "=========================================" << std::endl;
   std::cout << "sai build_res_digraph" << std::endl;
@@ -333,10 +343,11 @@ void edmonds_karp(FlowProblem &fp)
   while (true)
   {
     // 1. Compute residual digraph of D, d_hat
-    Digraph d_f;
-    //TODO: removing edges is a pain, copy manually only the correct ones
     compute_residual_capacities(&fp.d, &fp.a_d, &fp.arc_order);
+
+    Digraph d_f;
     build_res_digraph(&fp.d, &fp.a_d, &fp.arc_order, &d_f);
+
     print_aug_digraph(&fp.d, &fp.a_d, &fp.arc_order, &fp.aug_arc_order);
     auto ret = find_min_path(d_f, fp.source, fp.sink);
     if (std::get<bool>(ret)) // source-sink path exists
