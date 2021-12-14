@@ -76,9 +76,9 @@ struct FlowProblem
 
 FlowProblem read_flow(std::istream &is)
 {
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "entra read_flow" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   typename boost::graph_traits<Digraph>::vertices_size_type n;
   is >> n;
 
@@ -130,25 +130,26 @@ FlowProblem read_flow(std::istream &is)
   fp.source = source;
   fp.sink = sink;
 
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "sai read_flow" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
 
   return fp;
 }
 
-void build_res_digraph(Digraph *d, Digraph *ad, std::vector<Arc> *ordering, Digraph *rd)
+void compute_residual_capacities(
+    Digraph *d,
+    Digraph *ad,
+    std::vector<Arc> *ordering)
 {
-
-  std::cout << "===================" << std::endl;
-  std::cout << "entra build_res_digraph" << std::endl;
-  std::cout << "===================" << std::endl;
-
+  std::cout << "=========================================" << std::endl;
+  std::cout << "entra compute_residual_capacities" << std::endl;
+  std::cout << "=========================================" << std::endl;
 
   Digraph::edge_iterator e_it, e_end;
   for (tie(e_it, e_end) = boost::edges(*ad); e_it != e_end; e_it++)
   {
-    Arc orig_arc = ordering->at((*rd)[*e_it].orig_arc_idx);
+    Arc orig_arc = ordering->at((*ad)[*e_it].orig_arc_idx);
 
     // std::cout << "orig_arc: " << rd[*e_it].orig_arc_idx;
     int res_capacity = 0;
@@ -158,18 +159,43 @@ void build_res_digraph(Digraph *d, Digraph *ad, std::vector<Arc> *ordering, Digr
       res_capacity = (*d)[orig_arc].flow;
 
     (*ad)[*e_it].res_capacity = res_capacity;
-    (*rd)[*e_it].res_capacity = res_capacity;
-    std::cout << "(" << boost::source(*e_it, *rd) + 1 << " -> ";
-    std::cout << boost::target(*e_it, *rd) + 1 << ") res_capacity: ";
-    std::cout << (*rd)[*e_it].res_capacity << std::endl;
+    std::cout << "(" << boost::source(*e_it, *ad) + 1 << " -> ";
+    std::cout << boost::target(*e_it, *ad) + 1 << ") res_capacity: ";
+    std::cout << (*ad)[*e_it].res_capacity << std::endl;
 
-    if (res_capacity == 0)
-      boost::remove_edge(*e_it, *rd);
   }
 
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
+  std::cout << "sai compute_residual_capacities" << std::endl;
+  std::cout << "=========================================" << std::endl;
+}
+
+void build_res_digraph(
+    Digraph *d,
+    Digraph *ad,
+    std::vector<Arc> *ordering,
+    Digraph *rd)
+{
+  std::cout << "=========================================" << std::endl;
+  std::cout << "entra build_res_digraph" << std::endl;
+  std::cout << "=========================================" << std::endl;
+
+  // boost::copy_graph(ad, rd);
+
+  // boost::remove_edge_if(
+  //   [](Arc a) -> bool { return boost::get<3>(a) == 0;},
+  //   *rd
+  // );
+  // Digraph::edge_iterator e_it, e_end;
+  // for (tie(e_it, e_end) = boost::edges(*rd); e_it != e_end; e_it++)
+  // {
+  //   if ((*rd)[*e_it].res_capacity == 0)
+  //     boost::remove_edge(*e_it, *rd);
+  // }
+
+  std::cout << "=========================================" << std::endl;
   std::cout << "sai build_res_digraph" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
 }
 
 void print_aug_digraph(
@@ -217,9 +243,9 @@ std::tuple<
 find_min_path(Digraph &d_hat, Vertex start, Vertex target)
 {
 
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "entra find_min_path" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "Start: " << start + 1;
   std::cout << " Target: " << target + 1 << std::endl;
 
@@ -273,9 +299,9 @@ find_min_path(Digraph &d_hat, Vertex start, Vertex target)
       u = boost::source(reached_by[u], d_hat);
     }
 
-    std::cout << "===================" << std::endl;
+    std::cout << "=========================================" << std::endl;
     std::cout << "sai find_min_path (true)" << std::endl;
-    std::cout << "===================" << std::endl;
+    std::cout << "=========================================" << std::endl;
     return {true, path, boost::none};
   }
   else
@@ -289,9 +315,9 @@ find_min_path(Digraph &d_hat, Vertex start, Vertex target)
         S.push_back(*v_it);
     }
 
-    std::cout << "===================" << std::endl;
+    std::cout << "=========================================" << std::endl;
     std::cout << "sai find_min_path (false)" << std::endl;
-    std::cout << "===================" << std::endl;
+    std::cout << "=========================================" << std::endl;
     return {false, boost::none, S};
   }
 };
@@ -299,17 +325,17 @@ find_min_path(Digraph &d_hat, Vertex start, Vertex target)
 void edmonds_karp(FlowProblem &fp)
 {
   // TODO: build augmented digraph first, pass that to build_res_digraph
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "entra edmonds_karp" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
 
   int t = 0;
   while (true)
   {
     // 1. Compute residual digraph of D, d_hat
     Digraph d_f;
-    boost::copy_graph(fp.a_d, d_f);
-
+    //TODO: removing edges is a pain, copy manually only the correct ones
+    compute_residual_capacities(&fp.d, &fp.a_d, &fp.arc_order);
     build_res_digraph(&fp.d, &fp.a_d, &fp.arc_order, &d_f);
     print_aug_digraph(&fp.d, &fp.a_d, &fp.arc_order, &fp.aug_arc_order);
     auto ret = find_min_path(d_f, fp.source, fp.sink);
@@ -321,8 +347,8 @@ void edmonds_karp(FlowProblem &fp)
       int eps = INT_MAX;
       for (auto a : p)
       {
-        std::cout << "(" << boost::source(a, d_f) << " -> ";
-        std::cout << boost::target(a, d_f) << ") : " << d_f[a].res_capacity << std::endl;
+        std::cout << "(" << boost::source(a, d_f) + 1 << " -> ";
+        std::cout << boost::target(a, d_f) + 1 << ") : " << d_f[a].res_capacity << std::endl;
         if (d_f[a].res_capacity < eps)
         {
           eps = d_f[a].res_capacity;
@@ -338,8 +364,8 @@ void edmonds_karp(FlowProblem &fp)
           fp.d[orig_arc].flow += eps;
         else
           fp.d[orig_arc].flow -= eps;
-        std::cout << "(" << boost::source(orig_arc, fp.d) << " -> ";
-        std::cout << boost::target(orig_arc, fp.d) << ") : " << fp.d[orig_arc].flow << std::endl;
+        std::cout << "(" << boost::source(orig_arc, fp.d) + 1 << " -> ";
+        std::cout << boost::target(orig_arc, fp.d) + 1 << ") : " << fp.d[orig_arc].flow << std::endl;
       }
 
       // TODO: rm endl
@@ -347,7 +373,6 @@ void edmonds_karp(FlowProblem &fp)
       for (auto v : p)
         std::cout << " " << (fp.d[v].orig_arc_idx + 1) * d_f[v].direction;
       std::cout << std::endl;
-
     }
     else
     {
@@ -374,9 +399,9 @@ void edmonds_karp(FlowProblem &fp)
     }
     t++;
   }
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
   std::cout << "sai edmonds_karp" << std::endl;
-  std::cout << "===================" << std::endl;
+  std::cout << "=========================================" << std::endl;
 };
 
 /*========================================================
