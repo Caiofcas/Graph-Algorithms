@@ -137,6 +137,19 @@ FlowProblem read_flow(std::istream &is)
   return fp;
 }
 
+int get_flow(Digraph &d, Vertex sink)
+{
+  int flow = 0;
+  Digraph::edge_iterator e_it, e_end;
+  for (tie(e_it, e_end) = boost::edges(d); e_it != e_end; e_it++)
+  {
+    if (boost::target(*e_it, d) == sink)
+      flow += d[*e_it].flow;
+  }
+
+  return flow;
+}
+
 void compute_residual_capacities(
     Digraph *d,
     Digraph *ad,
@@ -162,7 +175,6 @@ void compute_residual_capacities(
     std::cout << "(" << boost::source(*e_it, *ad) + 1 << " -> ";
     std::cout << boost::target(*e_it, *ad) + 1 << ") res_capacity: ";
     std::cout << (*ad)[*e_it].res_capacity << std::endl;
-
   }
 
   std::cout << "=========================================" << std::endl;
@@ -186,20 +198,21 @@ void build_res_digraph(
   for (tie(e_it, e_end) = boost::edges(*ad); e_it != e_end; e_it++)
   {
     Arc a = *e_it;
-    if ((*ad)[a].res_capacity != 0){
+    if ((*ad)[a].res_capacity != 0)
+    {
       boost::add_edge(
-        boost::source(a, *ad),
-        boost::target(a, *ad),
-        {
-          (*ad)[a].capacity,
-          (*ad)[a].flow,
-          (*ad)[a].direction,
-          (*ad)[a].res_capacity,
-          (*ad)[a].orig_arc_idx,
-          (*ad)[a].back_arc_idx,
-          (*ad)[a].fwd_arc_idx,
-        },
-        *rd);
+          boost::source(a, *ad),
+          boost::target(a, *ad),
+          {
+              (*ad)[a].capacity,
+              (*ad)[a].flow,
+              (*ad)[a].direction,
+              (*ad)[a].res_capacity,
+              (*ad)[a].orig_arc_idx,
+              (*ad)[a].back_arc_idx,
+              (*ad)[a].fwd_arc_idx,
+          },
+          *rd);
     }
   }
 
@@ -390,9 +403,8 @@ void edmonds_karp(FlowProblem &fp)
       auto s_ret = std::get<2>(ret);
       std::vector<Vertex> S = s_ret.value();
 
-      int val_f = 0;
+      int val_f = get_flow(fp.d, fp.sink);
 
-      Digraph::edge_iterator e_it, e_end;
       // TODO: how to get val_f? keep list of arcs that reach sink,
       // probably warrants a sepparate function
       // for (tie(e_it, e_end) = boost::in_edges(fp.sink, fp.d);
